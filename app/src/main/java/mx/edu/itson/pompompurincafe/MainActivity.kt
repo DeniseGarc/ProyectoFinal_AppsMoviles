@@ -170,18 +170,21 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
     }
 }
 
-
+@Composable
+fun Fondo(){
+    Image(
+        painter = painterResource(id = R.drawable.fondo2_app),
+        contentDescription = "fondo de rayas",
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.FillBounds
+    )
+}
 
 @Composable
 fun OrdenesScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         // Fondo de la pantalla
-        Image(
-            painter = painterResource(id = R.drawable.fondo2_app),
-            contentDescription = "fondo",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+        Fondo()
 
         Image(
             painter = painterResource(id = R.drawable.ordenes2_pompompurin),

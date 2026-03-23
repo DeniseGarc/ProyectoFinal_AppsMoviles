@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -228,8 +230,12 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String){
         Spacer(modifier = Modifier.weight(1f).height(1.dp))
 
         // Botón revisar orden
+        val context = LocalContext.current
         Button(
-            onClick = { },
+            onClick = {
+                val intent = Intent(context, OrdenPersona::class.java)
+                context.startActivity(intent)
+            },
             colors = ButtonDefaults.buttonColors(containerColor = brown),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -259,12 +265,7 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String){
 fun MenuScreen() {
     Box(modifier = Modifier.fillMaxSize()) {
         // Fondo de la pantalla
-        Image(
-            painter = painterResource(id = R.drawable.fondo2_app),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.FillBounds
-        )
+        Fondo()
 
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
@@ -319,7 +320,7 @@ fun MenuScreen() {
                 contentPadding = PaddingValues(bottom = 100.dp) // Espacio para el banner inferior
             ) {
                 // platillos de ejemplo
-                items(1) {
+                items(4) {
                     PlatilloCard(R.drawable.ordenes_pompompurin,"Nombre del platillo...","Descripción...","$000.00")
                 }
             }
