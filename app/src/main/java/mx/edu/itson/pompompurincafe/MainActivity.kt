@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,11 +36,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.edu.itson.pompompurincafe.ui.theme.CustomFontFamily
 import mx.edu.itson.pompompurincafe.ui.theme.PompompurinCafeTheme
 import mx.edu.itson.pompompurincafe.ui.theme.brown
 import mx.edu.itson.pompompurincafe.ui.theme.white
@@ -128,12 +131,17 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    val context = LocalContext.current
+
                     // Botón de edición
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
-                            .clickable(){ /* Acción */ },
+                            .clickable(){
+                                val intent = Intent(context, Menu::class.java)
+                                context.startActivity(intent)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -230,8 +238,10 @@ fun OrdenesScreen() {
             shape = RoundedCornerShape(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+
+                // Icono botón nueva orden
                 Icon(Icons.Default.Add,
-                    contentDescription = null,
+                    contentDescription = "icono más",
                     tint = brown,
                     modifier = Modifier.size(30.dp))
 
@@ -240,7 +250,9 @@ fun OrdenesScreen() {
                 Text(text = "Nueva orden",
                     color = brown,
                     fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold)
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = CustomFontFamily
+                )
             }
         }
     }
