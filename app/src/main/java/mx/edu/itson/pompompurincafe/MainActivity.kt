@@ -175,6 +175,14 @@ fun OrdenesScreen() {
             contentScale = ContentScale.Crop
         )
 
+        Image(
+            painter = painterResource(id = R.drawable.ordenes2_pompompurin),
+            contentDescription = "pompompurin fondo",
+            modifier = Modifier
+                .size(250.dp)
+                .align(Alignment.BottomEnd)
+        )
+
         // Contenido
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
