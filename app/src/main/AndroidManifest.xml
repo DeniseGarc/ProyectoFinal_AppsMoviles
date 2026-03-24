@@ -27,6 +27,21 @@
             android:label="@string/title_activity_menu"
             android:theme="@style/Theme.PompompurinCafe" />
         <activity
+            android:name=".NuevaOrden"
+            android:exported="false"
+            android:label="@string/title_activity_menu"
+            android:theme="@style/Theme.PompompurinCafe" />
+        <activity
+            android:name=".PagarOrdenMesa"
+            android:exported="false"
+            android:label="@string/title_activity_menu"
+            android:theme="@style/Theme.PompompurinCafe" />
+        <activity
+            android:name=".PagarOrdenPersona"
+            android:exported="false"
+            android:label="@string/title_activity_menu"
+            android:theme="@style/Theme.PompompurinCafe" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"

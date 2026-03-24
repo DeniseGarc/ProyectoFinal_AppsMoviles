@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +16,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -75,6 +78,9 @@ fun NuevaOrdenScreen() {
 
 @Composable
 fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
+    var mesa by remember { mutableStateOf("") }
+    var numPersonas by remember { mutableStateOf("") }
+
     Card(
         modifier = Modifier
             .fillMaxWidth(0.9f)
@@ -96,11 +102,26 @@ fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
                 modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
                 fontFamily = FontFamily(Font(R.font.fredoka_medium))
             )
-            Box(
+
+            // Usamos TextField con diseño personalizado
+            TextField(
+                value = mesa,
+                onValueChange = { mesa = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp)
-                    .background(white, RoundedCornerShape(8.dp))
+                    .height(50.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = white,
+                    unfocusedContainerColor = white,
+                    disabledContainerColor = white,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = brown,
+                    focusedTextColor = brown,
+                    unfocusedTextColor = brown
+                ),
+                singleLine = true
             )
 
             Text(
@@ -109,11 +130,24 @@ fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
                 modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
                 fontFamily = FontFamily(Font(R.font.fredoka_medium))
             )
-            Box(
+
+            TextField(
+                value = numPersonas,
+                onValueChange = { numPersonas = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(40.dp)
-                    .background(white, RoundedCornerShape(8.dp))
+                    .height(50.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = white,
+                    unfocusedContainerColor = white,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = brown,
+                    focusedTextColor = brown,
+                    unfocusedTextColor = brown
+                ),
+                singleLine = true
             )
 
             Text(
@@ -128,7 +162,7 @@ fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(60.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(white)
             ) {
@@ -168,13 +202,13 @@ fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
 
 @Composable
 fun BotonNuevaOrden(tipo: Int) {
+    val context = LocalContext.current
+
     Button(
         onClick = {
-            if (tipo == 0) {
-                // flujo de pantallas
-            } else {
-                // flujo de pantallas
-            }
+            val pantalla = if (tipo == 0) Menu::class.java else OrdenPersona::class.java
+            val intent = Intent(context, pantalla)
+            context.startActivity(intent)
         },
         colors = ButtonDefaults.buttonColors(containerColor = brown),
         shape = RoundedCornerShape(12.dp),

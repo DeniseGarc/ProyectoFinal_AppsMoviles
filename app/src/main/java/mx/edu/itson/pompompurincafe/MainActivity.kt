@@ -93,6 +93,8 @@ fun HeaderBanner() {
 }
 @Composable
 fun OrdenCard(numero: String, personas: String, precio: String) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -123,15 +125,16 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
                         modifier = Modifier
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
-                            .clickable(){ /* Acción */ },
+                            .clickable {
+                                val intent = Intent(context, PagarOrdenMesa::class.java)
+                                context.startActivity(intent)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Text("$", color = brown, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
-
-                    val context = LocalContext.current
 
                     // Botón de edición
                     Box(
@@ -182,6 +185,8 @@ fun Fondo(){
 
 @Composable
 fun OrdenesScreen() {
+    val context = LocalContext.current
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Fondo de la pantalla
         Fondo()
@@ -231,7 +236,10 @@ fun OrdenesScreen() {
 
         // Botón "Nueva orden"
         Button(
-            onClick = { /* Acción */ },
+            onClick = {
+                val intent = Intent(context, NuevaOrden::class.java)
+                context.startActivity(intent)
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)

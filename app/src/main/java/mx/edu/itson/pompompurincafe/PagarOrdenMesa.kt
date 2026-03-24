@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -191,8 +193,13 @@ fun SeleccionPropina() {
 
 @Composable
 fun BotonProcesarPago() {
+    val context = LocalContext.current
+
     Button(
-        onClick = { /* flujo de pantallas */ },
+        onClick = {
+            val intent = Intent(context, MainActivity::class.java)
+            context.startActivity(intent)
+        },
         colors = ButtonDefaults.buttonColors(containerColor = brown),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(0.75f).height(65.dp)
