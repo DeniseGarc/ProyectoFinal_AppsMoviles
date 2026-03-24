@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,6 +35,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,6 +60,7 @@ import mx.edu.itson.pompompurincafe.ui.theme.yellow
 class Menu : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             PompompurinCafeTheme {
@@ -65,7 +71,92 @@ class Menu : ComponentActivity() {
 }
 
 @Composable
-fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: String) {
+fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String){
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
+
+    Row(
+        modifier = Modifier.padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Total",
+                    color = brown,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                // Cantidad de platillos ordenados
+                Text("$cantidadPlatillos platillos",
+                    fontSize = 16.sp,
+                    color = brown
+                )
+            }
+
+            // Total de la orden
+            Text("$$total",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 24.sp,
+                color = brown
+            )
+
+            // Propietario de la orden
+            Text("Orden de: $propietario",
+                fontSize = 16.sp,
+                color = brown
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f).height(1.dp))
+
+        // Botón revisar orden
+        Button(
+            onClick = {
+                if(tipoOrden == "MESA"){
+                    val intent = Intent(context, OrdenMesa::class.java)
+                    context.startActivity(intent)
+                }else{
+                    val intent = Intent(context, OrdenPersona::class.java)
+                    context.startActivity(intent)
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = brown),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier
+                .height(60.dp)
+                .padding(start= 20.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Revisar\nOrden",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = CustomFontFamily,
+                    color = white)
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Icon(Icons.Default.ArrowForward,
+                    contentDescription = "Icono de flecha",
+                    tint = white
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Double) {
+
+    // Contador de cantidad
+    var cantidad by remember { mutableIntStateOf(0) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,7 +198,7 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
                     )
 
                     // Precio del producto
-                    Text("$precio",
+                    Text("$$precio",
                         fontWeight = FontWeight.SemiBold,
                         color = brown
                     )
@@ -133,9 +224,14 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
                             .background(lightyellow2, RoundedCornerShape(10.dp))
                             .padding(horizontal = 2.dp, vertical = 2.dp)
                     ) {
+
                         // Botón disminuir
                         Button(
-                            onClick = { },
+                            onClick = {
+                                if (cantidad > 0){
+                                    cantidad--
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = lightyellow),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -147,7 +243,7 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
                         }
 
                         // Cantidad
-                        Text("0",
+                        Text("$cantidad",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = brown,
@@ -156,7 +252,9 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
 
                         // Botón aumentar
                         Button(
-                            onClick = { },
+                            onClick = {
+                                cantidad++
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = lightyellow),
                             shape = RoundedCornerShape(10.dp)
                         ) {
@@ -170,7 +268,8 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
 
                     // Botón Agregar
                     Button(
-                        onClick = { },
+                        onClick = {
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = brown),
                         shape = RoundedCornerShape(20.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp)
@@ -188,78 +287,7 @@ fun PlatilloCard(imagen: Int, nombre: String, descripcion: String, precio: Strin
 }
 
 
-@Composable
-fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String){
-    Row(
-        modifier = Modifier.padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Total",
-                    color = brown,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
 
-                Spacer(modifier = Modifier.width(20.dp))
-
-                // Cantidad de platillos ordenados
-                Text("$cantidadPlatillos platillos",
-                    fontSize = 16.sp,
-                    color = brown
-                )
-            }
-
-            // Total de la orden
-            Text("$$total",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 24.sp,
-                color = brown
-            )
-
-            // Propietario de la orden
-            Text("Orden de: $propietario",
-                fontSize = 16.sp,
-                color = brown
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f).height(1.dp))
-
-        // Botón revisar orden
-        val context = LocalContext.current
-        Button(
-            onClick = {
-                val intent = Intent(context, OrdenPersona::class.java)
-                context.startActivity(intent)
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = brown),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .height(60.dp)
-                .padding(start= 20.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Revisar\nOrden",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = CustomFontFamily,
-                    color = white)
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Icon(Icons.Default.ArrowForward,
-                    contentDescription = "Icono de flecha",
-                    tint = white
-                )
-            }
-        }
-    }
-
-}
 
 @Composable
 fun MenuScreen() {
@@ -320,8 +348,18 @@ fun MenuScreen() {
                 contentPadding = PaddingValues(bottom = 100.dp) // Espacio para el banner inferior
             ) {
                 // platillos de ejemplo
-                items(4) {
-                    PlatilloCard(R.drawable.ordenes_pompompurin,"Nombre del platillo...","Descripción...","$000.00")
+                items(1) {
+                    PlatilloCard(R.drawable.menu1,"Happy Birthday ♪ Strawberry Mousse","A simple, but moorsihly sweet and fluffy strawberry mousse served in a Pompompurin shaped bowl. It’s topped with fresh fruits and has a tart raspberry sauce on the side to pour over Ponpon like a bottle of birthday champagne.",88.88)
+                    PlatilloCard(R.drawable.menu2,"Happy Birthday ♪ Flower Bouquet Bisque","Witness Pompompurin striding across a sea of bisque to receive his very own birthday bouquet! The base of this dish is a rich tomato bisque containing red pepper hearts. The top contains Pompompurin and his sidekick “Muffin”, sculpted from yellow and white rice respectively. The cherry on top is, in fact, a rose garnish, sculpted from colored mash potato on some broccoli that represents leaves. The beautiful scene is equally a beautifully tasting medley of rich and mild flavors so diners can taste the happiness of Pompom’s special day.", 178.89)
+                    PlatilloCard(R.drawable.menu3,"Ode Yukako x Pompompurin Lemonade","Possibly the most adorable lemonade in Japan at the moment, the straw features an illustration of Pompompurin by Yukako Ode. The gentle, pleasurable tang of the lemon flavor is sure to have you fizzing with the same excitement of Pompompurrin on his birthday.",61.88)
+                    PlatilloCard(R.drawable.menu21,"Chocolate Banana Parfait","A special parfait of Purin, chocolate and banana. At the base is a fluffy sponge cake.",111.38)
+                    PlatilloCard(R.drawable.menu5,"Mango Soda with Icecream","Mango Soada with Icecream",84.38)
+                    PlatilloCard(R.drawable.menu20,"Fluffy Souffle Omelette Rice","Omurice wrapped in a fluffy soufflé omelette with demi-glace sauce.",212.64)
+                    PlatilloCard(R.drawable.menu7,"Pompompurin´s Mango Parfait","A special parfait of Purin, diced mangos, ice cream and much more. At the base is a fluffy sponge cake.",163.14)
+                    PlatilloCard(R.drawable.menu8,"Bagel´s Special Pancake Tower","A special pancake baked by Bagel, who is an expert cook. A decadent dessert with five layers of pancakes filled with various sauces such as caramel, chocolate, custard and more!",167.64)
+                    PlatilloCard(R.drawable.menu16,"Pompompurin´s Beef Stroganoff","A slow-cooked stroganoff with a deep flavour! Served with a beret-shaped hamburger patty, this cute dish will satisfy your heart and belly at 120%",156.39)
+                    PlatilloCard(R.drawable.menu19,"Strawberry Soda with Icecream","Strawberry Soda with Icecream",84.38)
+                    PlatilloCard(R.drawable.menu11,"I am Purin ♪ Pompompurin Pudding","Custard pudding of Pompompurin himself. Take off the biscuit beret, pour the sauce and enjoy.",56.25)
                 }
             }
         }
@@ -335,7 +373,7 @@ fun MenuScreen() {
             colors = CardDefaults.cardColors(containerColor = yellow),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Resumen(5,142.50,"Mesa 12")
+            Resumen(3,537.79,"Mesa 12")
         }
     }
 }

@@ -92,7 +92,7 @@ fun HeaderBanner() {
     }
 }
 @Composable
-fun OrdenCard(numero: String, personas: String, precio: String) {
+fun OrdenCard(numero: Int, personas: Int, precio: Double, tipoOrden: String) {
     val context = LocalContext.current
 
     Card(
@@ -113,7 +113,7 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
             ) {
                 // Número de mesa
                 Text(
-                    text = numero,
+                    text = "$numero",
                     color = white,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
@@ -125,9 +125,16 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
                         modifier = Modifier
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
-                            .clickable {
-                                val intent = Intent(context, PagarOrdenMesa::class.java)
-                                context.startActivity(intent)
+                            .clickable(){
+                                if (tipoOrden == "MESA") {
+                                    val intent = Intent(context, PagarOrdenMesa::class.java)
+                                    intent.putExtra("tipoOrden", tipoOrden)
+                                    context.startActivity(intent)
+                                } else {
+                                    val intent = Intent(context, PagarOrdenPersona::class.java)
+                                    intent.putExtra("tipoOrden", tipoOrden)
+                                    context.startActivity(intent)
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -142,8 +149,15 @@ fun OrdenCard(numero: String, personas: String, precio: String) {
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
                             .clickable(){
-                                val intent = Intent(context, Menu::class.java)
-                                context.startActivity(intent)
+                                if (tipoOrden == "MESA") {
+                                    val intent = Intent(context, OrdenMesa::class.java)
+                                    intent.putExtra("tipoOrden", tipoOrden)
+                                    context.startActivity(intent)
+                                } else {
+                                    val intent = Intent(context, OrdenPersona::class.java)
+                                    intent.putExtra("tipoOrden", tipoOrden)
+                                    context.startActivity(intent)
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -219,15 +233,15 @@ fun OrdenesScreen() {
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(9) { index ->
-                    // Datos de ejemplo
-                    val numeros = listOf("10", "2", "6", "11", "12","13","14","3","9")
-                    OrdenCard(
-                        numero = numeros[index],
-                        personas = "4",
-                        precio = "142.50"
-                    )
-                }
+                // Datos de ejemplo
+                item { OrdenCard(12,2,537.79, "MESA") }
+                item { OrdenCard(10,1,142.50, "MESA") }
+                item { OrdenCard(3,1,88.88, "PERSONA") }
+                item { OrdenCard(4,2,537.79, "PERSONA") }
+
+//                items(1) {
+//
+//                }
             }
 
             // Espacio para que el botón no tape la última fila

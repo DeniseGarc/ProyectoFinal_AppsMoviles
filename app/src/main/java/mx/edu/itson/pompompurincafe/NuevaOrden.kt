@@ -208,6 +208,10 @@ fun BotonNuevaOrden(tipo: Int) {
         onClick = {
             val pantalla = if (tipo == 0) Menu::class.java else OrdenPersona::class.java
             val intent = Intent(context, pantalla)
+
+            val etiqueta = if (tipo == 0) "MESA" else "PERSONA"
+            intent.putExtra("tipoOrden", etiqueta)
+
             context.startActivity(intent)
         },
         colors = ButtonDefaults.buttonColors(containerColor = brown),

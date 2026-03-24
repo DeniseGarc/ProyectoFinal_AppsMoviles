@@ -1,5 +1,6 @@
 package mx.edu.itson.pompompurincafe
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,10 +39,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -104,7 +112,8 @@ fun OrdenPersonaListaPlatillos(cantidad: Int, nombre: String) {
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Eliminar",
                 tint = brown,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier
+                    .size(28.dp)
                     .clickable() { /* Acción */ }
             )
         }
@@ -113,6 +122,11 @@ fun OrdenPersonaListaPlatillos(cantidad: Int, nombre: String) {
 
 @Composable
 fun PersonaHeader(numero: Int, nombre: String) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
+
     Row(
         modifier = Modifier.padding(start = 16.dp, top = 12.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -144,7 +158,11 @@ fun PersonaHeader(numero: Int, nombre: String) {
             modifier = Modifier
                 .size(32.dp)
                 .background(yellow, RoundedCornerShape(8.dp))
-                .clickable { },
+                .clickable {
+                    val intent = Intent(context, Menu::class.java)
+                    intent.putExtra("tipoOrden", tipoOrden)
+                    context.startActivity(intent)
+                },
             contentAlignment = Alignment.Center
         ) {
             Icon(Icons.Default.Edit,
@@ -159,6 +177,7 @@ fun PersonaHeader(numero: Int, nombre: String) {
 
 @Composable
 fun ResumenOrdenPersonaScreen() {
+    var nombreCliente by remember { mutableStateOf("") }
     val context = LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -169,7 +188,7 @@ fun ResumenOrdenPersonaScreen() {
             HeaderBanner()
 
             // Info mesa
-            InfoMesa(12,4,142.50)
+            InfoMesa(4,2,537.79)
 
             // Agregar cliente formulario
             Card(
@@ -195,19 +214,41 @@ fun ResumenOrdenPersonaScreen() {
                         color = yellow,
                         fontSize = 12.sp
                     )
+
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         // Campo de texto blanco
                         BasicTextField(
-                            value = "",
-                            onValueChange = {},
+                            value = nombreCliente,
+                            onValueChange = { nombreCliente = it },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(35.dp)
-                                .background(white, RoundedCornerShape(4.dp))
+                                .background(white, RoundedCornerShape(4.dp)),
+                            textStyle = TextStyle(
+                                color = brown,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center
+                            ),
+                            // decorationBox nos permite centrar el texto verticalmente
+                            decorationBox = { innerTextField ->
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center // Centrado vertical y horizontal del contenedor
+                                ) {
+                                    if (nombreCliente.isEmpty()) {
+                                        Text("Ingresa el nombre del cliente", color = Color.Gray, fontSize = 14.sp)
+                                    }
+                                    innerTextField()
+                                }
+                            }
                         )
+
                         Spacer(modifier = Modifier.width(12.dp))
 
                         // Botón circular amarillo con el "+"
@@ -229,10 +270,14 @@ fun ResumenOrdenPersonaScreen() {
                 contentPadding = PaddingValues(bottom = 100.dp) // Espacio para el botón de abajo
             ){
 
-                items(3) {
+                items(1) {
                     PersonaHeader(1, "Juan")
-                    OrdenPersonaListaPlatillos(1, "Nombre del platillo")
-                    OrdenPersonaListaPlatillos(1, "Nombre del platillo")
+                    OrdenPersonaListaPlatillos(1, "Mango Soda with Icecream")
+                    OrdenPersonaListaPlatillos(1, "Fluffy Souffle Omelette Rice")
+
+                    PersonaHeader(2, "Maria")
+                    OrdenPersonaListaPlatillos(1, "Mango Soda with Icecream")
+                    OrdenPersonaListaPlatillos(1, "Pompompurin´s Beef Stroganoff")
                 }
             }
         }
@@ -240,7 +285,9 @@ fun ResumenOrdenPersonaScreen() {
         // Botón mandar a cocina
         Button(
             onClick = {
-                val intent = Intent(context, Menu::class.java)
+
+                val intent = Intent(context, MainActivity::class.java)
+
                 context.startActivity(intent)
             },
             modifier = Modifier
