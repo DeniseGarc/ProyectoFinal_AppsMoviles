@@ -33,7 +33,7 @@ class PagarOrdenMesa : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PompompurinCafeTheme {
-                PagarOrdenMesaScreen("Mesa 10")
+                PagarOrdenMesaScreen("Mesa 12")
             }
         }
     }
@@ -100,8 +100,10 @@ fun Orden() {
         )
 
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(4) {
-                ItemPlatillo("1", "Nombre del platillo")
+            items(1) {
+                ItemPlatillo("2", "Mango Soda with Icecream", 84.38)
+                ItemPlatillo("1", "Fluffy Souffle Omelette Rice", 212.64)
+                ItemPlatillo("1", "Pompompurin´s Beef Strog...", 156.39)
             }
         }
 
@@ -113,20 +115,20 @@ fun Orden() {
 
         Column {
             Text(text = "Subtotal", color = brown, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
-            Text(text = "$$$$$$$$$$$", color = brown, fontSize = 22.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
+            Text(text = "$537.79", color = brown, fontSize = 22.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Column {
             Text(text = "Total", color = brown, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
-            Text(text = "$$$$$$$$$$$", color = brown, fontSize = 30.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
+            Text(text = "$537.79", color = brown, fontSize = 30.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
         }
     }
 }
 
 @Composable
-fun ItemPlatillo(cantidad: String, nombre: String) {
+fun ItemPlatillo(cantidad: String, nombre: String, precio: Double) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,7 +143,7 @@ fun ItemPlatillo(cantidad: String, nombre: String) {
             Text(cantidad, color = brown, fontSize = 20.sp, fontFamily = FontFamily(Font(R.font.fredoka_bold)), modifier = Modifier.padding(end = 12.dp))
             Text(nombre, color = brown, fontSize = 15.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)) )
             Spacer(modifier = Modifier.weight(1f))
-            Text("$$$$$", color = brown, fontSize = 15.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
+            Text("$$precio", color = brown, fontSize = 15.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
         }
     }
 }

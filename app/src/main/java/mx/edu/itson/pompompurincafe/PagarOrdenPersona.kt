@@ -35,7 +35,7 @@ class PagarOrdenPersona : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PompompurinCafeTheme {
-                PagarOrdenPersonaScreen("Mesa 12")
+                PagarOrdenPersonaScreen("Mesa 4")
             }
         }
     }
@@ -107,8 +107,8 @@ fun Orden(nombreSeleccionado: String, onPersonaCambiada: (String) -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CuentaPersona("Juan", nombreSeleccionado == "Juan") { onPersonaCambiada("Juan") }
-            CuentaPersona("Maria", nombreSeleccionado == "Maria") { onPersonaCambiada("Maria") }
+            CuentaPersona("Juan", 297.02,nombreSeleccionado == "Juan") { onPersonaCambiada("Juan") }
+            CuentaPersona("Maria", 240.77, nombreSeleccionado == "Maria") { onPersonaCambiada("Maria") }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -122,8 +122,9 @@ fun Orden(nombreSeleccionado: String, onPersonaCambiada: (String) -> Unit) {
         )
 
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(4) {
-                ItemPlatillo("1", "Nombre del platillo")
+            items(1) {
+                ItemPlatillo("1", "Mango Soada with Icecream", 84.38)
+                ItemPlatillo("1", "Fluffy Souffle Omelette Rice", 212.64)
             }
         }
 
@@ -135,18 +136,18 @@ fun Orden(nombreSeleccionado: String, onPersonaCambiada: (String) -> Unit) {
 
         Column {
             Text("Subtotal", color = brown, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
-            Text("$$$$$$$$$$$", color = brown, fontSize = 22.sp, fontFamily = FontFamily(Font(R.font.fredoka_bold)))
+            Text("$537.79", color = brown, fontSize = 22.sp, fontFamily = FontFamily(Font(R.font.fredoka_bold)))
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text("Total", color = brown, fontSize = 14.sp, fontFamily = FontFamily(Font(R.font.fredoka_medium)))
-            Text("$$$$$$$$$$$", color = brown, fontSize = 30.sp, fontFamily = FontFamily(Font(R.font.fredoka_bold)))
+            Text("$537.79", color = brown, fontSize = 30.sp, fontFamily = FontFamily(Font(R.font.fredoka_bold)))
         }
     }
 }
 
 @Composable
-fun CuentaPersona(nombre: String, seleccionado: Boolean, onClick: () -> Unit) {
+fun CuentaPersona(nombre: String, cantidad: Double ,seleccionado: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,7 +174,7 @@ fun CuentaPersona(nombre: String, seleccionado: Boolean, onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "$$$$$",
+                text = "$$cantidad",
                 color = if (seleccionado) yellow else brown,
                 fontSize = 16.sp,
                 fontFamily = FontFamily(Font(R.font.fredoka_medium))
