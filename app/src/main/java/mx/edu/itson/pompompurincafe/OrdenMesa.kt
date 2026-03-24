@@ -1,5 +1,7 @@
 package mx.edu.itson.pompompurincafe
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -152,6 +155,11 @@ fun InfoMesa(numMesa: Int, numPersonas: Int, total: Double){
 
 @Composable
 fun ResumenOrdenScreen() {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         Fondo()
@@ -160,7 +168,7 @@ fun ResumenOrdenScreen() {
             HeaderBanner()
 
            // Info mesa
-            InfoMesa(12,4,142.50)
+            InfoMesa(12,2,537.79)
 
             Row(
                 modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
@@ -190,7 +198,11 @@ fun ResumenOrdenScreen() {
                     modifier = Modifier
                         .size(32.dp)
                         .background(yellow, RoundedCornerShape(4.dp))
-                        .clickable { /* Acción */ },
+                        .clickable {
+                            val intent = Intent(context, Menu::class.java)
+                            intent.putExtra("tipoOrden", tipoOrden)
+                            context.startActivity(intent)
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Default.Edit, null, tint = brown, modifier = Modifier.size(18.dp))
@@ -202,15 +214,20 @@ fun ResumenOrdenScreen() {
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 100.dp) // Espacio para el botón de abajo
             ) {
-                items(10) {
-                    OrdenListaPlatillos(cantidad = 1, nombre = "Nombre del platillo")
+                items(1) {
+                    OrdenListaPlatillos(cantidad = 2, nombre = "Mango Soda with Icecream")
+                    OrdenListaPlatillos(cantidad = 1, nombre = "Fluffy Souffle Omelette Rice")
+                    OrdenListaPlatillos(cantidad = 1, nombre = "Pompompurin´s Beef Stroganoff")
                 }
             }
         }
 
         // Botón mandar a cocina
         Button(
-            onClick = { /* Acción */ },
+            onClick = {
+                val intent = Intent(context, MainActivity::class.java)
+                context.startActivity(intent)
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
