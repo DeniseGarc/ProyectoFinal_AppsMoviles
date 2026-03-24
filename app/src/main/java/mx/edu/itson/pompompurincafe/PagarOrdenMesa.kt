@@ -65,7 +65,7 @@ fun PagarOrdenMesaScreen(numeroMesa: String) {
                 fontFamily = FontFamily(Font(R.font.fredoka_bold))
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5 .dp))
 
             Card(
                 modifier = Modifier
@@ -132,7 +132,7 @@ fun ItemPlatillo(cantidad: String, nombre: String) {
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         color = lightyellow2,
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -172,7 +172,7 @@ fun SeleccionPropina() {
                     modifier = Modifier
                         .width(70.dp)
                         .height(35.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(if (porcentaje) lightyellow else yellow)
                         .clickable {
                             seleccionado = if (porcentaje) "" else opcion

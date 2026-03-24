@@ -68,7 +68,7 @@ fun PagarOrdenPersonaScreen(numeroMesa: String) {
                 fontFamily = FontFamily(Font(R.font.fredoka_bold))
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Card(
                 modifier = Modifier
@@ -150,7 +150,7 @@ fun CuentaPersona(nombre: String, seleccionado: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(40.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(if (seleccionado) brown else lightyellow2)
             .clickable { onClick() }

@@ -110,7 +110,7 @@ fun NuevaOrdenCard(seleccionado: Int, onSeleccionCambiada: (Int) -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = white,
                     unfocusedContainerColor = white,
