@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "276427865813",
+    "firebase_url": "https://pompompurin-cafe-default-rtdb.firebaseio.com",
+    "project_id": "pompompurin-cafe",
+    "storage_bucket": "pompompurin-cafe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:276427865813:android:2c8b158b33ed26e34fac5c",
+        "android_client_info": {
+          "package_name": "mx.edu.itson.pompompurincafe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3tfznIKK47UTMw_xxnj0e5Fyt3bveZIQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

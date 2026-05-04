@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -33,6 +34,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -42,15 +48,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.edu.itson.pompompurincafe.data.FirebaseManager
+import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.CustomFontFamily
 import mx.edu.itson.pompompurincafe.ui.theme.PompompurinCafeTheme
 import mx.edu.itson.pompompurincafe.ui.theme.brown
 import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         enableEdgeToEdge()
         setContent {
             PompompurinCafeTheme {
@@ -59,6 +69,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun HeaderBanner() {
     Box(
@@ -66,7 +77,6 @@ fun HeaderBanner() {
             .fillMaxWidth()
             .height(120.dp)
     ) {
-        // Header
         Image(
             painter = painterResource(id = R.drawable.header),
             contentDescription = null,
@@ -74,7 +84,6 @@ fun HeaderBanner() {
             contentScale = ContentScale.Crop
         )
 
-        // Titulo
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -91,9 +100,17 @@ fun HeaderBanner() {
         }
     }
 }
+
 @Composable
-fun OrdenCard(numero: Int, personas: Int, precio: Double, tipoOrden: String) {
+fun OrdenCard(orden: Orden) {
     val context = LocalContext.current
+    
+    // Mostramos el número de personas registrado en la base de datos
+    val personasTexto = if (orden.tipo == "PERSONA") {
+        if (orden.numPersonas == 1) "1 persona" else "${orden.numPersonas} personas"
+    } else {
+        "Toda la mesa"
+    }
 
     Card(
         modifier = Modifier
@@ -105,36 +122,29 @@ fun OrdenCard(numero: Int, personas: Int, precio: Double, tipoOrden: String) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Fila superior
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Número de mesa
                 Text(
-                    text = "$numero",
+                    text = "${orden.mesa}",
                     color = white,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold
                 )
 
                 Row {
-                    // Botón de pago
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
-                            .clickable(){
-                                if (tipoOrden == "MESA") {
-                                    val intent = Intent(context, PagarOrdenMesa::class.java)
-                                    intent.putExtra("tipoOrden", tipoOrden)
-                                    context.startActivity(intent)
-                                } else {
-                                    val intent = Intent(context, PagarOrdenPersona::class.java)
-                                    intent.putExtra("tipoOrden", tipoOrden)
-                                    context.startActivity(intent)
-                                }
+                            .clickable {
+                                val activity = if (orden.tipo == "MESA") PagarOrdenMesa::class.java else PagarOrdenPersona::class.java
+                                val intent = Intent(context, activity)
+                                intent.putExtra("tipoOrden", orden.tipo)
+                                intent.putExtra("ordenId", orden.id)
+                                context.startActivity(intent)
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -143,21 +153,16 @@ fun OrdenCard(numero: Int, personas: Int, precio: Double, tipoOrden: String) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Botón de edición
                     Box(
                         modifier = Modifier
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
-                            .clickable(){
-                                if (tipoOrden == "MESA") {
-                                    val intent = Intent(context, OrdenMesa::class.java)
-                                    intent.putExtra("tipoOrden", tipoOrden)
-                                    context.startActivity(intent)
-                                } else {
-                                    val intent = Intent(context, OrdenPersona::class.java)
-                                    intent.putExtra("tipoOrden", tipoOrden)
-                                    context.startActivity(intent)
-                                }
+                            .clickable {
+                                val activity = if (orden.tipo == "MESA") OrdenMesa::class.java else OrdenPersona::class.java
+                                val intent = Intent(context, activity)
+                                intent.putExtra("tipoOrden", orden.tipo)
+                                intent.putExtra("ordenId", orden.id)
+                                context.startActivity(intent)
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -172,13 +177,10 @@ fun OrdenCard(numero: Int, personas: Int, precio: Double, tipoOrden: String) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Cantidad de personas
-            Text(text = "$personas personas", color = white, fontSize = 16.sp)
-
-            // Total de la mesa
+            // Mostramos el texto basado en la propiedad numPersonas de la orden
+            Text(text = personasTexto, color = white, fontSize = 16.sp)
             Text(
-                text = "$$precio",
+                text = "$${String.format(Locale.US, "%.2f", orden.total)}",
                 color = yellow,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -200,9 +202,15 @@ fun Fondo(){
 @Composable
 fun OrdenesScreen() {
     val context = LocalContext.current
+    var listaOrdenes by remember { mutableStateOf<List<Orden>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        FirebaseManager.suscribirseAOrdenes { ordenes ->
+            listaOrdenes = ordenes.filter { !it.pagada }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Fondo de la pantalla
         Fondo()
 
         Image(
@@ -213,12 +221,9 @@ fun OrdenesScreen() {
                 .align(Alignment.BottomEnd)
         )
 
-        // Contenido
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
             HeaderBanner()
 
-            // titulo
             Text(
                 text = "Ordenes activas",
                 color = brown,
@@ -227,28 +232,19 @@ fun OrdenesScreen() {
                 modifier = Modifier.padding(16.dp)
             )
 
-            // Ordenes
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Datos de ejemplo
-                item { OrdenCard(12,2,537.79, "MESA") }
-                item { OrdenCard(10,1,142.50, "MESA") }
-                item { OrdenCard(3,1,88.88, "PERSONA") }
-                item { OrdenCard(4,2,537.79, "PERSONA") }
-
-//                items(1) {
-//
-//                }
+                items(listaOrdenes) { orden ->
+                    OrdenCard(orden)
+                }
             }
 
-            // Espacio para que el botón no tape la última fila
             Spacer(modifier = Modifier.height(100.dp))
         }
 
-        // Botón "Nueva orden"
         Button(
             onClick = {
                 val intent = Intent(context, NuevaOrden::class.java)
@@ -263,21 +259,9 @@ fun OrdenesScreen() {
             shape = RoundedCornerShape(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-                // Icono botón nueva orden
-                Icon(Icons.Default.Add,
-                    contentDescription = "icono más",
-                    tint = brown,
-                    modifier = Modifier.size(30.dp))
-
+                Icon(Icons.Default.Add, contentDescription = null, tint = brown, modifier = Modifier.size(30.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-
-                Text(text = "Nueva orden",
-                    color = brown,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = CustomFontFamily
-                )
+                Text(text = "Nueva orden", color = brown, fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = CustomFontFamily)
             }
         }
     }
@@ -289,4 +273,10 @@ fun OrdenesScreenPreview() {
     PompompurinCafeTheme {
         OrdenesScreen()
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HeaderBannerPreview() {
+    HeaderBanner()
 }

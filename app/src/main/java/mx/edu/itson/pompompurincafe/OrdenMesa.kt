@@ -8,34 +8,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,10 +28,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.edu.itson.pompompurincafe.data.FirebaseManager
+import mx.edu.itson.pompompurincafe.model.ItemOrden
+import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.PompompurinCafeTheme
 import mx.edu.itson.pompompurincafe.ui.theme.brown
 import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
+import java.util.Locale
 
 class OrdenMesa : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,95 +49,67 @@ class OrdenMesa : ComponentActivity() {
     }
 }
 
-
 @Composable
-fun OrdenListaPlatillos(cantidad: Int, nombre: String) {
+fun OrdenListaPlatillos(item: ItemOrden, onUpdateQuantity: (Int) -> Unit, onRemove: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp, horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = white),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, brown)
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-                // Cantidad del platillo
-                Text(
-                    text = "$cantidad",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = brown
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropUp,
+                        contentDescription = "Aumentar",
+                        tint = brown,
+                        modifier = Modifier.size(28.dp).clickable { onUpdateQuantity(item.cantidad + 1) }
+                    )
+                    Text(text = "${item.cantidad}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = brown)
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Disminuir",
+                        tint = brown,
+                        modifier = Modifier.size(28.dp).clickable {
+                            if (item.cantidad > 1) {
+                                onUpdateQuantity(item.cantidad - 1)
+                            } else {
+                                onRemove()
+                            }
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.width(16.dp))
-
-                // Nombre del platillo
-                Text(
-                    text = "$nombre",
-                    fontSize = 16.sp,
-                    color = brown,
-                    fontWeight = FontWeight.Medium
-                )
+                Text(text = item.platillo.nombre, fontSize = 16.sp, color = brown, modifier = Modifier.width(200.dp))
             }
-
-            // Botón para eliminar platillo de la orden
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Eliminar",
                 tint = brown,
-                modifier = Modifier.size(28.dp)
-                    .clickable() { /* Acción */ }
+                modifier = Modifier.size(28.dp).clickable { onRemove() }
             )
         }
     }
 }
 
 @Composable
-fun InfoMesa(numMesa: Int, numPersonas: Int, total: Double){
+fun InfoMesa(orden: Orden){
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-
-            // Número de mesa
-            Text(
-                text = "Mesa $numMesa",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = brown
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-
-            // Cantidad de personas
-            Surface(
-                color = yellow,
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    "$numPersonas personas",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = brown
-                )
-            }
+            Text(text = "Mesa ${orden.mesa}", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = brown)
         }
-
-        // Total de la orden
         Column(horizontalAlignment = Alignment.End) {
             Text("Total", fontSize = 16.sp, color = brown)
-            Text("$$total", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = brown)
+            Text("$${String.format(Locale.US, "%.2f", orden.total)}", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = brown)
         }
     }
 }
@@ -156,105 +117,79 @@ fun InfoMesa(numMesa: Int, numPersonas: Int, total: Double){
 @Composable
 fun ResumenOrdenScreen() {
     val context = LocalContext.current
-
     val activity = context as? Activity
+    val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
+    val tipoOrden = activity?.intent?.getStringExtra("tipoOrden") ?: "MESA"
 
-    val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
+    var ordenActual by remember { mutableStateOf<Orden?>(null) }
+
+    LaunchedEffect(ordenId) {
+        if (ordenId.isNotEmpty()) {
+            FirebaseManager.obtenerOrden(ordenId) { ordenActual = it }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-
         Fondo()
-
         Column(modifier = Modifier.fillMaxSize()) {
             HeaderBanner()
 
-           // Info mesa
-            InfoMesa(12,2,537.79)
+            ordenActual?.let { orden ->
+                InfoMesa(orden)
 
-            Row(
-                modifier = Modifier.padding(start = 16.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Titulo Mesa editar
-                Box(
-                    modifier = Modifier
-                        .size(45.dp)
-                        .background(brown, RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("1",
-                        color = white,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("Mesa",
-                    color = brown,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp)
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // Icono Editar
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .background(yellow, RoundedCornerShape(4.dp))
-                        .clickable {
+                Row(modifier = Modifier.padding(start = 16.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(45.dp).background(brown, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                        Text("${orden.mesa}", color = white, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Mesa", color = brown, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier.size(32.dp).background(yellow, RoundedCornerShape(4.dp)).clickable {
                             val intent = Intent(context, Menu::class.java)
                             intent.putExtra("tipoOrden", tipoOrden)
+                            intent.putExtra("ordenId", ordenId)
                             context.startActivity(intent)
                         },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Default.Edit, null, tint = brown, modifier = Modifier.size(18.dp))
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Default.Edit, null, tint = brown, modifier = Modifier.size(18.dp))
+                    }
                 }
-            }
 
-            // Lista de platillos
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 100.dp) // Espacio para el botón de abajo
-            ) {
-                items(1) {
-                    OrdenListaPlatillos(cantidad = 2, nombre = "Mango Soda with Icecream")
-                    OrdenListaPlatillos(cantidad = 1, nombre = "Fluffy Souffle Omelette Rice")
-                    OrdenListaPlatillos(cantidad = 1, nombre = "Pompompurin´s Beef Stroganoff")
+                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 100.dp)) {
+                    items(orden.productos) { item ->
+                        OrdenListaPlatillos(
+                            item = item,
+                            onUpdateQuantity = { nuevaCantidad ->
+                                val nuevaLista = orden.productos.map {
+                                    if (it == item) it.copy(cantidad = nuevaCantidad) else it
+                                }.toMutableList()
+                                val ordenActualizada = orden.copy(productos = nuevaLista)
+                                FirebaseManager.guardarOrden(ordenActualizada, {}, {})
+                            },
+                            onRemove = {
+                                val nuevaLista = orden.productos.toMutableList()
+                                nuevaLista.remove(item)
+                                val ordenActualizada = orden.copy(productos = nuevaLista)
+                                FirebaseManager.guardarOrden(ordenActualizada, {}, {})
+                            }
+                        )
+                    }
                 }
             }
         }
 
-        // Botón mandar a cocina
         Button(
-            onClick = {
-                val intent = Intent(context, MainActivity::class.java)
-                context.startActivity(intent)
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-                .height(65.dp)
-                .fillMaxWidth(0.8f),
+            onClick = { context.startActivity(Intent(context, MainActivity::class.java)) },
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 32.dp).height(65.dp).fillMaxWidth(0.8f),
             colors = ButtonDefaults.buttonColors(containerColor = yellow),
             shape = RoundedCornerShape(12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Mandar a cocina",
-                    color = brown,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                Text(text = "Mandar a cocina", color = brown, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
                 Spacer(modifier = Modifier.width(16.dp))
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = null,
-                    tint = brown,
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = brown, modifier = Modifier.size(28.dp))
             }
         }
     }
@@ -262,7 +197,7 @@ fun ResumenOrdenScreen() {
 
 @Preview(showBackground = true)
 @Composable
-fun OrdenScreenPreview() {
+fun ResumenOrdenScreenPreview() {
     PompompurinCafeTheme {
         ResumenOrdenScreen()
     }
