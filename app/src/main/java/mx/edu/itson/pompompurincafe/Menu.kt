@@ -107,7 +107,7 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId:
  * Composable que representa una tarjeta de platillo.
  */
 @Composable
-fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String) {
+fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mesa: Int) {
     val context = LocalContext.current
     var cantidad by remember { mutableIntStateOf(0) }
 
@@ -167,8 +167,15 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String) {
                                     ordenId,
                                     ItemOrden.desde(platillo, cantidad, clienteNombre)
                                 )
+                                
+                                val mensaje = if (clienteNombre.isNotEmpty()) {
+                                    "¡Agregado para $clienteNombre! \uD83C\uDF6E"
+                                } else {
+                                    "¡Agregado a la mesa $mesa! \uD83C\uDF6E"
+                                }
+                                
                                 cantidad = 0
-                                Toast.makeText(context, "Agregado para $clienteNombre", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
                             } else if (ordenId.isEmpty()) {
                                 Toast.makeText(context, "Error: No hay orden activa", Toast.LENGTH_SHORT).show()
                             }
@@ -212,7 +219,7 @@ fun MenuScreen() {
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 items(DataSource.menuCompleto) {
-                    PlatilloCard(it, ordenId, clienteNombre)
+                    PlatilloCard(it, ordenId, clienteNombre, ordenActual?.mesa ?: 0)
                 }
             }
 

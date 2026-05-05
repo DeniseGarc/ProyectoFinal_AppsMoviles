@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +41,6 @@ import java.util.Locale
  * Activity encargada de mostrar la pantalla para pagar una orden por persona.
  */
 class PagarOrdenPersona : ComponentActivity() {
-
     /**
      * Inicializa la actividad y carga el contenido Compose.
      */
@@ -171,12 +171,20 @@ fun PagarOrdenPersonaScreen() {
                                         )
                                     }
                                     if (comensal.pagado) {
-                                        Text(
-                                            text = "✓ Pagado",
-                                            color = lightyellow,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
-                                        )
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = androidx.compose.material.icons.Icons.Default.CheckCircle,
+                                                contentDescription = "Pagado",
+                                                tint = androidx.compose.ui.graphics.Color(0xFF4CAF50), // Verde claro para el icono
+                                                modifier = Modifier.size(18.dp).padding(end = 4.dp)
+                                            )
+                                            Text(
+                                                text = "Pagado",
+                                                color = androidx.compose.ui.graphics.Color(0xFF2E7D32), // Verde oscuro para el texto
+                                                fontWeight = FontWeight.ExtraBold,
+                                                fontSize = 16.sp
+                                            )
+                                        }
                                     } else {
                                         Text(
                                             text = "Pagar →",
@@ -245,21 +253,41 @@ fun PagarOrdenPersonaScreen() {
                                             .padding(vertical = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("${item.cantidad}x", color = brown, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = "${item.cantidad}x",
+                                            color = brown,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
                                         Spacer(modifier = Modifier.width(12.dp))
-                                        Text(item.platillo.nombre, modifier = Modifier.weight(1f), color = brown)
-                                        Text("$${String.format(Locale.US, "%.2f", item.subtotal)}", color = brown)
+                                        Text(
+                                            text = item.platillo.nombre,
+                                            color = brown,
+                                            modifier = Modifier.weight(1f),
+                                            fontSize = 14.sp
+                                        )
+                                        Text(
+                                            text = "$${String.format(Locale.US, "%.2f", item.subtotal)}",
+                                            color = brown,
+                                            fontSize = 14.sp
+                                        )
                                     }
-                                    HorizontalDivider(color = lightyellow2.copy(alpha = 0.5f))
+                                    HorizontalDivider(color = lightyellow2.copy(alpha = 0.5f), thickness = 1.dp)
                                 }
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            Text("Seleccionar Propina:", color = brown, fontWeight = FontWeight.Bold)
-
+                            Text(
+                                "Seleccionar Propina:",
+                                color = brown,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 val opciones = listOf("0%", "5%", "10%", "Personalizado")
@@ -285,7 +313,13 @@ fun PagarOrdenPersonaScreen() {
                                             },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(displayTxt, color = brown, textAlign = TextAlign.Center)
+                                        Text(
+                                            text = displayTxt,
+                                            color = brown,
+                                            fontSize = if (displayTxt.length > 5) 10.sp else 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center
+                                        )
                                     }
                                 }
                             }
@@ -301,10 +335,34 @@ fun PagarOrdenPersonaScreen() {
                                     .background(lightyellow.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                                     .padding(12.dp)
                             ) {
-                                Text("Total a pagar: $${String.format(Locale.US, "%.2f", totalConPropina)}",
-                                    color = brown,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Subtotal", color = brown, fontSize = 16.sp)
+                                    Text("$${String.format(Locale.US, "%.2f", subtotal)}", color = brown, fontSize = 16.sp)
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Propina", color = brown, fontSize = 14.sp)
+                                    Text("$${String.format(Locale.US, "%.2f", montoPropina)}", color = brown, fontSize = 14.sp)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Bottom
+                                ) {
+                                    Text("Total a pagar", color = brown, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "$${String.format(Locale.US, "%.2f", totalConPropina)}",
+                                        color = brown,
+                                        fontSize = 28.sp,
+                                        fontWeight = FontWeight.ExtraBold
+                                    )
+                                }
                             }
                         }
                     }
@@ -337,17 +395,30 @@ fun PagarOrdenPersonaScreen() {
                                 Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
                             })
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = brown)
+                        colors = ButtonDefaults.buttonColors(containerColor = brown),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(65.dp)
                     ) {
-                        Text("Procesar pago", color = yellow)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Procesar pago", color = yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text(comensal.nombre, color = yellow, fontSize = 12.sp)
+                        }
                     }
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     TextButton(onClick = { comensalSeleccionado = null }) {
-                        Text("← Volver a la lista", color = brown)
+                        Text("← Volver a la lista", color = brown, fontWeight = FontWeight.SemiBold)
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = brown)
+            } ?: run {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = brown)
+                }
             }
         }
     }

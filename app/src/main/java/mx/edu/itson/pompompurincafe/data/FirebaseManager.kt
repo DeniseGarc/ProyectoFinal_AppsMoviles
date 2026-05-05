@@ -58,12 +58,12 @@ object FirebaseManager {
             }
         }
 
-        orden.actualizarNumPersonas()
-        orden.calcularTotales()
-
         if (orden.tipoCuenta == "individual") {
             orden.comensales = construirComensales(orden)
         }
+
+        orden.actualizarNumPersonas()
+        orden.calcularTotales()
 
         ordenesRef.child(id).setValue(orden)
             .addOnSuccessListener { onSuccess() }
@@ -134,12 +134,12 @@ object FirebaseManager {
                     it.productos.add(nuevoItem)
                 }
 
-                it.actualizarNumPersonas()
-                it.calcularTotales()
-
                 if (it.tipoCuenta == "individual") {
                     it.comensales = construirComensales(it)
                 }
+
+                it.actualizarNumPersonas()
+                it.calcularTotales()
 
                 ordenesRef.child(ordenId).setValue(it)
             }
