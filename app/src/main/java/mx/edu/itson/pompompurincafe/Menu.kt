@@ -15,8 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,7 +41,14 @@ import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 import java.util.Locale
 
+/**
+ * Activity que muestra el menú de platillos.
+ */
 class Menu : ComponentActivity() {
+
+    /**
+     * Inicializa la pantalla del menú.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -54,8 +60,11 @@ class Menu : ComponentActivity() {
     }
 }
 
+/**
+ * Composable que muestra el resumen de la orden actual.
+ */
 @Composable
-fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId: String){
+fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId: String) {
     val context = LocalContext.current
     val activity = context as? Activity
     val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
@@ -76,7 +85,7 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId:
         Spacer(modifier = Modifier.weight(1f))
         Button(
             onClick = {
-                val intent = if(tipoOrden == "MESA") Intent(context, OrdenMesa::class.java) else Intent(context, OrdenPersona::class.java)
+                val intent = if (tipoOrden == "mesa") Intent(context, OrdenMesa::class.java) else Intent(context, OrdenPersona::class.java)
                 intent.putExtra("tipoOrden", tipoOrden)
                 intent.putExtra("ordenId", ordenId)
                 context.startActivity(intent)
@@ -88,12 +97,15 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId:
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Revisar\nOrden", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, fontFamily = CustomFontFamily, color = white)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(Icons.Default.ArrowForward, contentDescription = null, tint = white)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = white)
             }
         }
     }
 }
 
+/**
+ * Composable que representa una tarjeta de platillo.
+ */
 @Composable
 fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String) {
     val context = LocalContext.current
@@ -121,20 +133,40 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String) {
                 }
                 Text(platillo.descripcion, fontSize = 12.sp, color = brown)
                 Spacer(modifier = Modifier.height(10.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.background(lightyellow2, RoundedCornerShape(10.dp)).padding(4.dp)) {
-                        Button(onClick = { if (cantidad > 0) cantidad-- }, colors = ButtonDefaults.buttonColors(containerColor = lightyellow), shape = RoundedCornerShape(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .background(lightyellow2, RoundedCornerShape(10.dp))
+                            .padding(4.dp)
+                    ) {
+                        Button(
+                            onClick = { if (cantidad > 0) cantidad-- },
+                            colors = ButtonDefaults.buttonColors(containerColor = lightyellow),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
                             Text("-", fontSize = 20.sp, color = brown)
                         }
                         Text("$cantidad", modifier = Modifier.padding(horizontal = 16.dp), color = brown)
-                        Button(onClick = { cantidad++ }, colors = ButtonDefaults.buttonColors(containerColor = lightyellow), shape = RoundedCornerShape(10.dp)) {
+                        Button(
+                            onClick = { cantidad++ },
+                            colors = ButtonDefaults.buttonColors(containerColor = lightyellow),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
                             Text("+", fontSize = 20.sp, color = brown)
                         }
                     }
                     Button(
                         onClick = {
                             if (ordenId.isNotEmpty() && cantidad > 0) {
-                                FirebaseManager.agregarProductoAOrden(ordenId, ItemOrden(platillo = platillo, cantidad = cantidad, cliente = clienteNombre))
+                                FirebaseManager.agregarProductoAOrden(
+                                    ordenId,
+                                    ItemOrden.desde(platillo, cantidad, clienteNombre)
+                                )
                                 cantidad = 0
                                 Toast.makeText(context, "Agregado para $clienteNombre", Toast.LENGTH_SHORT).show()
                             } else if (ordenId.isEmpty()) {
@@ -151,6 +183,9 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String) {
     }
 }
 
+/**
+ * Composable principal que muestra el menú y el resumen de la orden.
+ */
 @Composable
 fun MenuScreen() {
     val context = LocalContext.current
@@ -168,15 +203,19 @@ fun MenuScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Fondo()
+
         Column(modifier = Modifier.fillMaxSize()) {
             HeaderBanner()
+
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                items(DataSource.menuCompleto) { PlatilloCard(it, ordenId, clienteNombre) }
+                items(DataSource.menuCompleto) {
+                    PlatilloCard(it, ordenId, clienteNombre)
+                }
             }
-            
+
             ordenActual?.let { orden ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -195,6 +234,9 @@ fun MenuScreen() {
     }
 }
 
+/**
+ * Vista previa del menú.
+ */
 @Preview(showBackground = true)
 @Composable
 fun MenuScreenPreview() {

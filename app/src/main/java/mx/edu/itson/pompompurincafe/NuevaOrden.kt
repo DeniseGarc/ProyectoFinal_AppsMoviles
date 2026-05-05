@@ -32,7 +32,14 @@ import mx.edu.itson.pompompurincafe.data.FirebaseManager
 import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.*
 
+/**
+ * Activity para crear una nueva orden.
+ */
 class NuevaOrden : ComponentActivity() {
+
+    /**
+     * Inicializa la pantalla de nueva orden.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -44,13 +51,15 @@ class NuevaOrden : ComponentActivity() {
     }
 }
 
+/**
+ * Composable principal para la creación de una orden.
+ */
 @Composable
 fun NuevaOrdenScreen() {
     var tipoSeleccionado by remember { mutableIntStateOf(0) }
     var mesaSeleccionada by remember { mutableIntStateOf(0) }
     var ordenesActivas by remember { mutableStateOf<List<Orden>>(emptyList()) }
 
-    // Obtenemos las órdenes de Firebase para validar disponibilidad
     LaunchedEffect(Unit) {
         FirebaseManager.suscribirseAOrdenes { ordenes ->
             ordenesActivas = ordenes.filter { !it.pagada }
@@ -98,9 +107,12 @@ fun NuevaOrdenScreen() {
     }
 }
 
+/**
+ * Composable que muestra la tarjeta de selección de mesa y tipo de orden.
+ */
 @Composable
 fun NuevaOrdenCard(
-    seleccionado: Int, 
+    seleccionado: Int,
     onSeleccionCambiada: (Int) -> Unit,
     mesaSeleccionada: Int,
     onMesaChange: (Int) -> Unit,
@@ -137,7 +149,7 @@ fun NuevaOrdenCard(
                 items((1..15).toList()) { numero ->
                     val estaOcupada = mesasOcupadas.contains(numero)
                     val esEstaSeleccionada = mesaSeleccionada == numero
-                    
+
                     Box(
                         modifier = Modifier
                             .aspectRatio(1f)
@@ -207,6 +219,9 @@ fun NuevaOrdenCard(
     }
 }
 
+/**
+ * Composable que maneja la creación de una nueva orden.
+ */
 @Composable
 fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
     val context = LocalContext.current
@@ -214,24 +229,24 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
     Button(
         onClick = {
             if (mesa != 0) {
-                // Validación final de disponibilidad por si se ocupó mientras llenaba el resto
                 if (mesasOcupadas.contains(mesa)) {
                     Toast.makeText(context, "La mesa $mesa ya no está disponible", Toast.LENGTH_SHORT).show()
                 } else {
-                    val etiqueta = if (tipo == 0) "MESA" else "PERSONA"
+                    val etiqueta = if (tipo == 0) "mesa" else "individual"
                     val nuevaOrden = Orden(
                         mesa = mesa,
-                        tipo = etiqueta
+                        tipoCuenta = etiqueta
                     )
 
-                    FirebaseManager.guardarOrden(nuevaOrden, 
+                    FirebaseManager.guardarOrden(
+                        nuevaOrden,
                         onSuccess = {
                             val pantalla = if (tipo == 0) Menu::class.java else OrdenPersona::class.java
                             val intent = Intent(context, pantalla)
                             intent.putExtra("tipoOrden", etiqueta)
                             intent.putExtra("ordenId", nuevaOrden.id)
                             context.startActivity(intent)
-                        }, 
+                        },
                         onError = {
                             Toast.makeText(context, "Error: $it", Toast.LENGTH_SHORT).show()
                         }
@@ -243,7 +258,9 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
         },
         colors = ButtonDefaults.buttonColors(containerColor = brown),
         shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth(0.5f).height(60.dp)
+        modifier = Modifier
+            .fillMaxWidth(0.5f)
+            .height(60.dp)
     ) {
         Text(
             text = "Tomar orden",
@@ -254,6 +271,9 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
     }
 }
 
+/**
+ * Composable que muestra la imagen inferior decorativa.
+ */
 @Composable
 fun FooterPompompurin() {
     Image(
@@ -264,6 +284,9 @@ fun FooterPompompurin() {
     )
 }
 
+/**
+ * Vista previa de la pantalla de nueva orden.
+ */
 @Preview(showBackground = true)
 @Composable
 fun NuevaOrdenScreenPreview() {

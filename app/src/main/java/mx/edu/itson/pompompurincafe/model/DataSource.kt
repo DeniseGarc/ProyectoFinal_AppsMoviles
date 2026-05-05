@@ -2,7 +2,12 @@ package mx.edu.itson.pompompurincafe.model
 
 import mx.edu.itson.pompompurincafe.R
 
+/**
+ * Fuente de datos local para pruebas y carga inicial de información.
+ */
 object DataSource {
+
+    /** Lista completa del menú disponible */
     val menuCompleto = listOf(
         Platillo(1, "Happy Birthday ♪ Strawberry Mousse", "A simple, but moorsihly sweet and fluffy strawberry mousse served in a Pompompurin shaped bowl.", 88.88, R.drawable.menu1, "Postres"),
         Platillo(2, "Happy Birthday ♪ Flower Bouquet Bisque", "Witness Pompompurin striding across a sea of bisque to receive his very own birthday bouquet!", 178.89, R.drawable.menu2, "Platillos"),
@@ -17,11 +22,11 @@ object DataSource {
         Platillo(11, "I am Purin ♪ Pompompurin Pudding", "Custard pudding of Pompompurin himself. Take off the biscuit beret and enjoy.", 56.25, R.drawable.menu11, "Postres")
     )
 
-    // Datos de ejemplo para las órdenes activas
+    /** Lista de órdenes de ejemplo para pruebas */
     val ordenesEjemplo = listOf(
-        Orden(id = "1", mesa = 12, numPersonas = 2, tipo = "MESA"),
-        Orden(id = "2", mesa = 10, numPersonas = 1, tipo = "MESA"),
-        Orden(id = "3", mesa = 3, numPersonas = 1, tipo = "PERSONA"),
-        Orden(id = "4", mesa = 4, numPersonas = 2, tipo = "PERSONA")
+        Orden(id = "1", mesa = 12, numPersonas = 2, tipoCuenta = "mesa"),
+        Orden(id = "2", mesa = 10, numPersonas = 1, tipoCuenta = "mesa"),
+        Orden(id = "3", mesa = 3, numPersonas = 1, tipoCuenta = "individual"),
+        Orden(id = "4", mesa = 4, numPersonas = 2, tipoCuenta = "individual")
     )
 }

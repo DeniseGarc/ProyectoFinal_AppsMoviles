@@ -8,18 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -27,18 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -57,10 +36,17 @@ import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 import java.util.Locale
 
+/**
+ * Activity principal que muestra las órdenes activas.
+ */
 class MainActivity : ComponentActivity() {
+
+    /**
+     * Inicializa la pantalla principal.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
         setContent {
             PompompurinCafeTheme {
@@ -70,6 +56,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Composable que muestra el banner superior.
+ */
 @Composable
 fun HeaderBanner() {
     Box(
@@ -101,13 +90,15 @@ fun HeaderBanner() {
     }
 }
 
+/**
+ * Composable que representa una tarjeta de orden.
+ */
 @Composable
 fun OrdenCard(orden: Orden) {
     val context = LocalContext.current
-    
-    // Mostramos el número de personas registrado en la base de datos
-    val personasTexto = if (orden.tipo == "PERSONA") {
-        if (orden.numPersonas == 1) "1 persona" else "${orden.numPersonas} personas"
+
+    val personasTexto = if (orden.tipoCuenta == "individual") {
+        if (orden.numPersonas == 1) "1 persona" else "${orden.numPersonas ?: 0} personas"
     } else {
         "Toda la mesa"
     }
@@ -140,9 +131,9 @@ fun OrdenCard(orden: Orden) {
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
                             .clickable {
-                                val activity = if (orden.tipo == "MESA") PagarOrdenMesa::class.java else PagarOrdenPersona::class.java
+                                val activity = if (orden.tipoCuenta == "mesa") PagarOrdenMesa::class.java else PagarOrdenPersona::class.java
                                 val intent = Intent(context, activity)
-                                intent.putExtra("tipoOrden", orden.tipo)
+                                intent.putExtra("tipoOrden", orden.tipoCuenta)
                                 intent.putExtra("ordenId", orden.id)
                                 context.startActivity(intent)
                             },
@@ -158,9 +149,9 @@ fun OrdenCard(orden: Orden) {
                             .size(36.dp)
                             .background(yellow, RoundedCornerShape(8.dp))
                             .clickable {
-                                val activity = if (orden.tipo == "MESA") OrdenMesa::class.java else OrdenPersona::class.java
+                                val activity = if (orden.tipoCuenta == "mesa") OrdenMesa::class.java else OrdenPersona::class.java
                                 val intent = Intent(context, activity)
-                                intent.putExtra("tipoOrden", orden.tipo)
+                                intent.putExtra("tipoOrden", orden.tipoCuenta)
                                 intent.putExtra("ordenId", orden.id)
                                 context.startActivity(intent)
                             },
@@ -177,8 +168,9 @@ fun OrdenCard(orden: Orden) {
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            // Mostramos el texto basado en la propiedad numPersonas de la orden
+
             Text(text = personasTexto, color = white, fontSize = 16.sp)
+
             Text(
                 text = "$${String.format(Locale.US, "%.2f", orden.total)}",
                 color = yellow,
@@ -189,8 +181,11 @@ fun OrdenCard(orden: Orden) {
     }
 }
 
+/**
+ * Composable que dibuja el fondo de la aplicación.
+ */
 @Composable
-fun Fondo(){
+fun Fondo() {
     Image(
         painter = painterResource(id = R.drawable.fondo2_app),
         contentDescription = "fondo de rayas",
@@ -199,6 +194,9 @@ fun Fondo(){
     )
 }
 
+/**
+ * Composable principal que muestra la lista de órdenes.
+ */
 @Composable
 fun OrdenesScreen() {
     val context = LocalContext.current
@@ -261,12 +259,21 @@ fun OrdenesScreen() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Add, contentDescription = null, tint = brown, modifier = Modifier.size(30.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Nueva orden", color = brown, fontSize = 20.sp, fontWeight = FontWeight.Bold, fontFamily = CustomFontFamily)
+                Text(
+                    text = "Nueva orden",
+                    color = brown,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = CustomFontFamily
+                )
             }
         }
     }
 }
 
+/**
+ * Vista previa de la pantalla de órdenes.
+ */
 @Preview(showBackground = true)
 @Composable
 fun OrdenesScreenPreview() {
@@ -275,6 +282,9 @@ fun OrdenesScreenPreview() {
     }
 }
 
+/**
+ * Vista previa del banner.
+ */
 @Preview(showBackground = true)
 @Composable
 fun HeaderBannerPreview() {

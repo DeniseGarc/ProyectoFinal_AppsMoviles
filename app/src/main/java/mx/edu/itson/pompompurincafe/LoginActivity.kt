@@ -25,7 +25,14 @@ import mx.edu.itson.pompompurincafe.ui.theme.PompompurinCafeTheme
 import mx.edu.itson.pompompurincafe.ui.theme.brown
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 
+/**
+ * Activity principal de inicio de sesión.
+ */
 class LoginActivity : ComponentActivity() {
+
+    /**
+     * Inicializa la pantalla de login.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -37,6 +44,9 @@ class LoginActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Composable que representa la pantalla de login.
+ */
 @Composable
 fun LoginScreen() {
     val context = LocalContext.current
@@ -51,7 +61,6 @@ fun LoginScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo del proyecto
             Image(
                 painter = painterResource(id = R.drawable.ordenes2_pompompurin),
                 contentDescription = "Logo Pompompurin",
@@ -71,7 +80,6 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Eslogan
             Text(
                 text = "¡El lugar más dulce para tus antojos!",
                 color = brown,
@@ -82,7 +90,6 @@ fun LoginScreen() {
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Botón para ingresar
             Button(
                 onClick = {
                     val intent = Intent(context, MainActivity::class.java)
@@ -107,6 +114,9 @@ fun LoginScreen() {
     }
 }
 
+/**
+ * Vista previa del LoginScreen.
+ */
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {

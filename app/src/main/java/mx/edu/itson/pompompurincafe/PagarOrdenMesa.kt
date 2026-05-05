@@ -37,7 +37,14 @@ import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.*
 import java.util.Locale
 
+/**
+ * Activity que maneja el pago de una orden por mesa completa.
+ */
 class PagarOrdenMesa : ComponentActivity() {
+
+    /**
+     * Inicializa la pantalla de pago de la mesa.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -49,6 +56,9 @@ class PagarOrdenMesa : ComponentActivity() {
     }
 }
 
+/**
+ * Composable principal para mostrar el flujo de pago de una mesa.
+ */
 @Composable
 fun PagarOrdenMesaScreen() {
     val context = LocalContext.current
@@ -60,7 +70,6 @@ fun PagarOrdenMesaScreen() {
     var etiquetaPropina by remember { mutableStateOf("0%") }
     var showDialog by remember { mutableStateOf(false) }
 
-    // Cargar la orden desde Firebase al iniciar
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) {
@@ -131,10 +140,13 @@ fun PagarOrdenMesaScreen() {
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Botón para procesar el pago y liberar la mesa
                 Button(
                     onClick = {
-                        val ordenPagada = orden.copy(pagada = true)
+                        val ordenPagada = orden.copy(
+                            pagada = true,
+                            propina = montoPropina,
+                            total = orden.subtotal + montoPropina
+                        )
                         FirebaseManager.guardarOrden(ordenPagada, {
                             Toast.makeText(context, "Mesa ${orden.mesa} pagada exitosamente", Toast.LENGTH_SHORT).show()
                             val intent = Intent(context, MainActivity::class.java)
@@ -166,6 +178,9 @@ fun PagarOrdenMesaScreen() {
     }
 }
 
+/**
+ * Diálogo para ingresar una propina personalizada.
+ */
 @Composable
 fun CustomTipDialog(
     subtotal: Double,
@@ -181,21 +196,15 @@ fun CustomTipDialog(
         text = {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = isPercentage,
-                        onClick = { isPercentage = true },
-                        colors = RadioButtonDefaults.colors(selectedColor = brown)
-                    )
+                    RadioButton(selected = isPercentage, onClick = { isPercentage = true }, colors = RadioButtonDefaults.colors(selectedColor = brown))
                     Text("Porcentual (%)", color = brown)
                     Spacer(modifier = Modifier.width(8.dp))
-                    RadioButton(
-                        selected = !isPercentage,
-                        onClick = { isPercentage = false },
-                        colors = RadioButtonDefaults.colors(selectedColor = brown)
-                    )
+                    RadioButton(selected = !isPercentage, onClick = { isPercentage = false }, colors = RadioButtonDefaults.colors(selectedColor = brown))
                     Text("Fijo ($)", color = brown)
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     value = value,
                     onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) value = it },
@@ -233,6 +242,9 @@ fun CustomTipDialog(
     )
 }
 
+/**
+ * Composable que muestra el resumen de pago con propina y total.
+ */
 @Composable
 fun ResumenPagoContenido(
     orden: Orden,
@@ -257,29 +269,23 @@ fun ResumenPagoContenido(
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(orden.productos) { item ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "${item.cantidad}x", color = brown, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("${item.cantidad}x", color = brown, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(text = item.platillo.nombre, color = brown, modifier = Modifier.weight(1f), fontSize = 14.sp)
-                    Text(text = "$${String.format(Locale.US, "%.2f", item.subtotal)}", color = brown, fontSize = 14.sp)
+                    Text(item.platillo.nombre, color = brown, modifier = Modifier.weight(1f))
+                    Text("$${String.format(Locale.US, "%.2f", item.subtotal)}", color = brown)
                 }
-                HorizontalDivider(color = lightyellow2.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = lightyellow2.copy(alpha = 0.5f))
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Seleccionar Propina:", color = brown, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Text("Seleccionar Propina:", color = brown, fontWeight = FontWeight.Bold)
+
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             val opciones = listOf("0%", "5%", "10%", "Personalizado")
             opciones.forEach { txt ->
                 val seleccionado = (etiquetaPropina == txt) || (txt == "Personalizado" && etiquetaPropina !in listOf("0%", "5%", "10%"))
@@ -301,37 +307,39 @@ fun ResumenPagoContenido(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = displayTxt,
-                        color = brown,
-                        fontSize = if (displayTxt.length > 5) 10.sp else 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
+                    Text(displayTxt, color = brown, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Column(modifier = Modifier.fillMaxWidth().background(lightyellow.copy(alpha = 0.3f), RoundedCornerShape(8.dp)).padding(12.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(lightyellow.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                .padding(12.dp)
+        ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Subtotal", color = brown, fontSize = 16.sp)
-                Text("$${String.format(Locale.US, "%.2f", subtotal)}", color = brown, fontSize = 16.sp)
+                Text("Subtotal", color = brown)
+                Text("$${String.format(Locale.US, "%.2f", subtotal)}", color = brown)
             }
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Propina", color = brown, fontSize = 14.sp)
-                Text("$${String.format(Locale.US, "%.2f", propina)}", color = brown, fontSize = 14.sp)
+                Text("Propina", color = brown)
+                Text("$${String.format(Locale.US, "%.2f", propina)}", color = brown)
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                Text("Total a pagar", color = brown, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                Text("$${String.format(Locale.US, "%.2f", totalConPropina)}", color = brown, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Total a pagar", color = brown, fontWeight = FontWeight.Bold)
+                Text("$${String.format(Locale.US, "%.2f", totalConPropina)}", color = brown, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
 }
 
+/**
+ * Vista previa de la pantalla de pago de mesa.
+ */
 @Preview(showBackground = true)
 @Composable
 fun PagarOrdenMesaScreenPreview() {
