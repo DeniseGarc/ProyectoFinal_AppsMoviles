@@ -8,6 +8,7 @@ import mx.edu.itson.pompompurincafe.model.Comensal
 import mx.edu.itson.pompompurincafe.model.ItemOrden
 import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.model.Platillo
+import mx.edu.itson.pompompurincafe.model.Pago
 
 /**
  * Maneja todas las operaciones relacionadas con Firebase Realtime Database.
@@ -22,6 +23,9 @@ object FirebaseManager {
 
     /** Referencia al nodo del menú */
     private val menuRef = database.getReference("menu")
+
+    /** Referencia al nodo de pagos */
+    private val pagosRef = database.getReference("pagos")
 
     /**
      * Obtiene el menú completo desde Firebase.
@@ -71,6 +75,28 @@ object FirebaseManager {
     }
 
     /**
+     * Registra un nuevo pago en el sistema.
+     */
+    fun registrarPago(pago: Pago, onSuccess: (String) -> Unit, onError: (String) -> Unit) {
+        val id = pagosRef.push().key ?: ""
+        pago.id = id
+        if (pago.fecha == 0L) pago.fecha = System.currentTimeMillis()
+
+        pagosRef.child(id).setValue(pago)
+            .addOnSuccessListener { onSuccess(id) }
+            .addOnFailureListener { e -> onError(e.message ?: "Error al registrar pago") }
+    }
+
+    /**
+     * Elimina una orden de Firebase.
+     */
+    fun eliminarOrden(ordenId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        ordenesRef.child(ordenId).removeValue()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e.message ?: "Error al eliminar") }
+    }
+
+    /**
      * Construye la lista de comensales agrupando productos por cliente.
      */
     private fun construirComensales(orden: Orden): MutableList<Comensal> {
@@ -89,6 +115,7 @@ object FirebaseManager {
                 propina = propina,
                 total = subtotal + propina,
                 pagado = existente?.pagado ?: false,
+                pagoId = existente?.pagoId,
                 productosIds = items.map { it.itemId }
             )
         }.toMutableList()

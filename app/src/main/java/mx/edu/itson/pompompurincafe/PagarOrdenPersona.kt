@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -31,9 +33,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import mx.edu.itson.pompompurincafe.data.FirebaseManager
 import mx.edu.itson.pompompurincafe.model.Comensal
 import mx.edu.itson.pompompurincafe.model.Orden
+import mx.edu.itson.pompompurincafe.model.Pago
 import mx.edu.itson.pompompurincafe.ui.theme.*
 import java.util.Locale
 
@@ -63,12 +68,14 @@ fun PagarOrdenPersonaScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
+    val auth = Firebase.auth
 
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
     var comensalSeleccionado by remember { mutableStateOf<Comensal?>(null) }
     var montoPropina by remember { mutableDoubleStateOf(0.0) }
     var etiquetaPropina by remember { mutableStateOf("0%") }
     var showDialog by remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
@@ -173,14 +180,14 @@ fun PagarOrdenPersonaScreen() {
                                     if (comensal.pagado) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
-                                                imageVector = androidx.compose.material.icons.Icons.Default.CheckCircle,
+                                                imageVector = Icons.Default.CheckCircle,
                                                 contentDescription = "Pagado",
-                                                tint = androidx.compose.ui.graphics.Color(0xFF4CAF50), // Verde claro para el icono
+                                                tint = Color(0xFF4CAF50),
                                                 modifier = Modifier.size(18.dp).padding(end = 4.dp)
                                             )
                                             Text(
                                                 text = "Pagado",
-                                                color = androidx.compose.ui.graphics.Color(0xFF2E7D32), // Verde oscuro para el texto
+                                                color = Color(0xFF2E7D32),
                                                 fontWeight = FontWeight.ExtraBold,
                                                 fontSize = 16.sp
                                             )
@@ -369,47 +376,73 @@ fun PagarOrdenPersonaScreen() {
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    Button(
-                        onClick = {
-                            val comensalesActualizados = orden.comensales?.map {
-                                if (it.nombre == comensal.nombre) {
-                                    it.copy(pagado = true, propina = montoPropina, total = it.subtotal + montoPropina)
-                                } else it
-                            }?.toMutableList()
+                    if (isProcessing) {
+                        CircularProgressIndicator(color = brown)
+                    } else {
+                        Button(
+                            onClick = {
+                                isProcessing = true
+                                val subtotalPago = comensal.subtotal
+                                val totalFinalPago = subtotalPago + montoPropina
 
-                            val productosActualizados = orden.productos.map {
-                                if (it.cliente == comensal.nombre) it.copy(pagado = true) else it
-                            }.toMutableList()
+                                val nuevoPago = Pago(
+                                    ordenId = orden.id,
+                                    comensalId = comensal.id,
+                                    monto = subtotalPago,
+                                    propina = montoPropina,
+                                    total = totalFinalPago,
+                                    mesero = auth.currentUser?.email ?: "Desconocido"
+                                )
 
-                            val ordenActualizada = orden.copy(
-                                comensales = comensalesActualizados,
-                                productos = productosActualizados
-                            )
+                                // 1. Registrar el pago independiente
+                                FirebaseManager.registrarPago(nuevoPago, {
+                                    // 2. Actualizar la orden localmente y en Firebase
+                                    val comensalesActualizados = orden.comensales?.map {
+                                        if (it.nombre == comensal.nombre) {
+                                            it.copy(pagado = true, propina = montoPropina, total = totalFinalPago)
+                                        } else it
+                                    }?.toMutableList()
 
-                            FirebaseManager.guardarOrden(ordenActualizada, {
-                                Toast.makeText(context, "${comensal.nombre} ha pagado", Toast.LENGTH_SHORT).show()
-                                comensalSeleccionado = null
-                                montoPropina = 0.0
-                                etiquetaPropina = "0%"
-                            }, { error ->
-                                Toast.makeText(context, "Error: $error", Toast.LENGTH_SHORT).show()
-                            })
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = brown),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .height(65.dp)
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Procesar pago", color = yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            Text(comensal.nombre, color = yellow, fontSize = 12.sp)
+                                    val productosActualizados = orden.productos.map {
+                                        if (it.cliente == comensal.nombre) it.copy(pagado = true) else it
+                                    }.toMutableList()
+
+                                    val ordenActualizada = orden.copy(
+                                        comensales = comensalesActualizados,
+                                        productos = productosActualizados
+                                    )
+
+                                    FirebaseManager.guardarOrden(ordenActualizada, {
+                                        isProcessing = false
+                                        Toast.makeText(context, "Pago de ${comensal.nombre} registrado", Toast.LENGTH_SHORT).show()
+                                        comensalSeleccionado = null
+                                        montoPropina = 0.0
+                                        etiquetaPropina = "0%"
+                                    }, { error ->
+                                        isProcessing = false
+                                        Toast.makeText(context, "Error al actualizar orden: $error", Toast.LENGTH_SHORT).show()
+                                    })
+                                }, { error ->
+                                    isProcessing = false
+                                    Toast.makeText(context, "Error al registrar pago: $error", Toast.LENGTH_SHORT).show()
+                                })
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = brown),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(65.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Procesar pago", color = yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                                Text(comensal.nombre, color = yellow, fontSize = 12.sp)
+                            }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    TextButton(onClick = { comensalSeleccionado = null }) {
+                    TextButton(onClick = { if (!isProcessing) comensalSeleccionado = null }) {
                         Text("← Volver a la lista", color = brown, fontWeight = FontWeight.SemiBold)
                     }
 

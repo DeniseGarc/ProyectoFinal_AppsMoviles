@@ -21,6 +21,11 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:label="Registro"
+            android:theme="@style/Theme.PompompurinCafe" />
+        <activity
             android:name=".OrdenPersona"
             android:exported="false"
             android:label="@string/title_activity_orden_persona"

@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import mx.edu.itson.pompompurincafe.data.FirebaseManager
 import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.*
@@ -225,6 +227,7 @@ fun NuevaOrdenCard(
 @Composable
 fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
     val context = LocalContext.current
+    val auth = Firebase.auth
 
     Button(
         onClick = {
@@ -233,9 +236,12 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
                     Toast.makeText(context, "La mesa $mesa ya no está disponible", Toast.LENGTH_SHORT).show()
                 } else {
                     val etiqueta = if (tipo == 0) "mesa" else "individual"
+                    val usuarioActual = auth.currentUser?.email ?: "Desconocido"
+                    
                     val nuevaOrden = Orden(
                         mesa = mesa,
-                        tipoCuenta = etiqueta
+                        tipoCuenta = etiqueta,
+                        mesero = usuarioActual
                     )
 
                     FirebaseManager.guardarOrden(

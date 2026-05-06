@@ -22,6 +22,9 @@ data class Comensal(
 
     /** Indica si el comensal ya realizó su pago */
     var pagado: Boolean = false,
+    
+    /** ID del registro de pago asociado */
+    var pagoId: String? = null,
 
     /** Lista de IDs de los productos asociados al comensal */
     var productosIds: List<String> = emptyList()

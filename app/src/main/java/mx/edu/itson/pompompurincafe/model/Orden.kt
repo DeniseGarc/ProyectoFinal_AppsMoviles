@@ -32,6 +32,12 @@ data class Orden(
     /** Indica si la orden ha sido pagada completamente */
     var pagada: Boolean = false,
 
+    /** Correo o ID del mesero que tomó la orden */
+    var mesero: String = "",
+    
+    /** ID del registro de pago (para cuentas de mesa) */
+    var pagoId: String? = null,
+
     /** Lista de productos incluidos en la orden */
     var productos: MutableList<ItemOrden> = mutableListOf(),
 

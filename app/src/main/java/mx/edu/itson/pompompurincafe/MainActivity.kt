@@ -2,6 +2,7 @@ package mx.edu.itson.pompompurincafe
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,11 +16,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -94,7 +97,7 @@ fun HeaderBanner() {
  * Composable que representa una tarjeta de orden.
  */
 @Composable
-fun OrdenCard(orden: Orden) {
+fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
     val context = LocalContext.current
 
     val personasTexto = if (orden.tipoCuenta == "individual") {
@@ -142,7 +145,7 @@ fun OrdenCard(orden: Orden) {
                         Text("$", color = brown, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
 
                     Box(
                         modifier = Modifier
@@ -164,19 +167,53 @@ fun OrdenCard(orden: Orden) {
                             modifier = Modifier.size(20.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(Color(0xFFE57373), RoundedCornerShape(8.dp))
+                            .clickable { onDelete() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Eliminar",
+                            tint = white,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = personasTexto, color = white, fontSize = 16.sp)
+            Text(text = personasTexto, color = white, fontSize = 14.sp)
+            Text(text = "Mesero: ${orden.mesero}", color = white.copy(alpha = 0.8f), fontSize = 12.sp)
 
-            Text(
-                text = "$${String.format(Locale.US, "%.2f", orden.total)}",
-                color = yellow,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                Column {
+                    Text(text = "Subtotal", color = white, fontSize = 12.sp)
+                    Text(
+                        text = "$${String.format(Locale.US, "%.2f", orden.subtotal)}",
+                        color = white,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = "Total", color = yellow, fontSize = 12.sp)
+                    Text(
+                        text = "$${String.format(Locale.US, "%.2f", orden.total)}",
+                        color = yellow,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
@@ -201,11 +238,45 @@ fun Fondo() {
 fun OrdenesScreen() {
     val context = LocalContext.current
     var listaOrdenes by remember { mutableStateOf<List<Orden>>(emptyList()) }
+    var ordenAEliminar by remember { mutableStateOf<Orden?>(null) }
 
     LaunchedEffect(Unit) {
         FirebaseManager.suscribirseAOrdenes { ordenes ->
             listaOrdenes = ordenes.filter { !it.pagada }
         }
+    }
+
+    if (ordenAEliminar != null) {
+        AlertDialog(
+            onDismissRequest = { ordenAEliminar = null },
+            title = { Text(text = "Confirmar eliminación") },
+            text = { Text(text = "¿Estás seguro de que deseas borrar la orden de la mesa ${ordenAEliminar?.mesa}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        ordenAEliminar?.let { orden ->
+                            FirebaseManager.eliminarOrden(
+                                orden.id,
+                                onSuccess = {
+                                    Toast.makeText(context, "Orden eliminada", Toast.LENGTH_SHORT).show()
+                                },
+                                onError = {
+                                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                        ordenAEliminar = null
+                    }
+                ) {
+                    Text(text = "Eliminar", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { ordenAEliminar = null }) {
+                    Text(text = "Cancelar")
+                }
+            }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -236,7 +307,7 @@ fun OrdenesScreen() {
                 modifier = Modifier.weight(1f)
             ) {
                 items(listaOrdenes) { orden ->
-                    OrdenCard(orden)
+                    OrdenCard(orden, onDelete = { ordenAEliminar = orden })
                 }
             }
 

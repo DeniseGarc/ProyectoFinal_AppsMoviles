@@ -32,8 +32,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import mx.edu.itson.pompompurincafe.data.FirebaseManager
 import mx.edu.itson.pompompurincafe.model.Orden
+import mx.edu.itson.pompompurincafe.model.Pago
 import mx.edu.itson.pompompurincafe.ui.theme.*
 import java.util.Locale
 
@@ -64,11 +67,13 @@ fun PagarOrdenMesaScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
+    val auth = Firebase.auth
 
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
     var montoPropina by remember { mutableDoubleStateOf(0.0) }
     var etiquetaPropina by remember { mutableStateOf("0%") }
     var showDialog by remember { mutableStateOf(false) }
+    var isProcessing by remember { mutableStateOf(false) }
 
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
@@ -140,31 +145,56 @@ fun PagarOrdenMesaScreen() {
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                Button(
-                    onClick = {
-                        val ordenPagada = orden.copy(
-                            pagada = true,
-                            propina = montoPropina,
-                            total = orden.subtotal + montoPropina
-                        )
-                        FirebaseManager.guardarOrden(ordenPagada, {
-                            Toast.makeText(context, "Mesa ${orden.mesa} pagada exitosamente", Toast.LENGTH_SHORT).show()
-                            val intent = Intent(context, MainActivity::class.java)
-                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            context.startActivity(intent)
-                        }, { error ->
-                            Toast.makeText(context, "Error al procesar: $error", Toast.LENGTH_SHORT).show()
-                        })
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = brown),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(65.dp)
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Procesar pago", color = yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Text("Mesa ${orden.mesa}", color = yellow, fontSize = 12.sp)
+                if (isProcessing) {
+                    CircularProgressIndicator(color = brown)
+                } else {
+                    Button(
+                        onClick = {
+                            isProcessing = true
+                            val subtotal = orden.subtotal
+                            val totalFinal = subtotal + montoPropina
+                            
+                            val nuevoPago = Pago(
+                                ordenId = orden.id,
+                                monto = subtotal,
+                                propina = montoPropina,
+                                total = totalFinal,
+                                mesero = auth.currentUser?.email ?: "Desconocido"
+                            )
+
+                            // 1. Registrar el pago en su propio nodo
+                            FirebaseManager.registrarPago(nuevoPago, {
+                                // 2. Actualizar el estado de la orden
+                                val ordenPagada = orden.copy(
+                                    pagada = true,
+                                    propina = montoPropina,
+                                    total = totalFinal
+                                )
+                                FirebaseManager.guardarOrden(ordenPagada, {
+                                    isProcessing = false
+                                    Toast.makeText(context, "Pago de mesa ${orden.mesa} registrado", Toast.LENGTH_SHORT).show()
+                                    val intent = Intent(context, MainActivity::class.java)
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    context.startActivity(intent)
+                                }, { error ->
+                                    isProcessing = false
+                                    Toast.makeText(context, "Error al actualizar orden: $error", Toast.LENGTH_SHORT).show()
+                                })
+                            }, { error ->
+                                isProcessing = false
+                                Toast.makeText(context, "Error al registrar pago: $error", Toast.LENGTH_SHORT).show()
+                            })
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = brown),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .height(65.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Procesar pago", color = yellow, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text("Mesa ${orden.mesa}", color = yellow, fontSize = 12.sp)
+                        }
                     }
                 }
 
@@ -253,7 +283,7 @@ fun ResumenPagoContenido(
     onPropinaChange: (Double, String) -> Unit,
     onCustomClick: () -> Unit
 ) {
-    val subtotal = orden.total
+    val subtotal = orden.subtotal
     val propina = montoPropina
     val totalConPropina = subtotal + propina
 
