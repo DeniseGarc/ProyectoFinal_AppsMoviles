@@ -42,12 +42,13 @@ import mx.edu.itson.pompompurincafe.ui.theme.yellow
 import java.util.Locale
 
 /**
- * Activity que muestra el menú de platillos.
+ * Actividad que muestra el catálogo de alimentos y bebidas disponibles en la cafetería.
+ * Permite a los meseros seleccionar productos y asignarlos a una orden específica.
  */
 class Menu : ComponentActivity() {
 
     /**
-     * Inicializa la pantalla del menú.
+     * Inicializa la pantalla de menú.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,12 +62,15 @@ class Menu : ComponentActivity() {
 }
 
 /**
- * Composable que muestra el resumen de la orden actual.
+ * Barra inferior que muestra el total acumulado de la orden actual.
+ * Incluye el botón para avanzar a la pantalla de revisión de la comanda.
  */
 @Composable
 fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId: String) {
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Obtiene el tipo de orden (por mesa o por persona) enviado desde la pantalla anterior
     val tipoOrden = activity?.intent?.getStringExtra("tipoOrden")
 
     Row(
@@ -83,6 +87,8 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId:
             Text("Orden de: $propietario", fontSize = 16.sp, color = brown)
         }
         Spacer(modifier = Modifier.weight(1f))
+
+        // Redirige a la pantalla de revisión correspondiente según el tipo de cuenta
         Button(
             onClick = {
                 val intent = if (tipoOrden == "mesa") Intent(context, OrdenMesa::class.java) else Intent(context, OrdenPersona::class.java)
@@ -104,11 +110,14 @@ fun Resumen(cantidadPlatillos: Int, total: Double, propietario: String, ordenId:
 }
 
 /**
- * Composable que representa una tarjeta de platillo.
+ * Tarjeta individual para cada platillo o bebida del menú.
+ * Contiene la foto, precio, descripción y los controles para modificar la cantidad.
  */
 @Composable
 fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mesa: Int) {
     val context = LocalContext.current
+
+    // Estado local para controlar cuántas piezas de este platillo se van a agregar
     var cantidad by remember { mutableIntStateOf(0) }
 
     Card(
@@ -138,6 +147,7 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mes
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Controles para aumentar o disminuir la cantidad del producto
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -160,6 +170,8 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mes
                             Text("+", fontSize = 20.sp, color = brown)
                         }
                     }
+
+                    // Envía el producto seleccionado a la orden en Firebase
                     Button(
                         onClick = {
                             if (ordenId.isNotEmpty() && cantidad > 0) {
@@ -167,7 +179,8 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mes
                                     ordenId,
                                     ItemOrden.desde(platillo, cantidad, clienteNombre)
                                 )
-                                
+
+                                // Personaliza la alerta dependiendo de si la orden es de alguien o de la mesa entera
                                 val mensaje = if (clienteNombre.isNotEmpty()) {
                                     "¡Agregado para $clienteNombre! \uD83C\uDF6E"
                                 } else {
@@ -191,17 +204,22 @@ fun PlatilloCard(platillo: Platillo, ordenId: String, clienteNombre: String, mes
 }
 
 /**
- * Composable principal que muestra el menú y el resumen de la orden.
+ * Estructura principal de la interfaz del menú.
+ * Junta el banner, la lista de platillos y la sección del resumen inferior.
  */
 @Composable
 fun MenuScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Recupera los datos de la orden que fueron enviados desde la pantalla anterior
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
     val clienteNombre = activity?.intent?.getStringExtra("clienteNombre") ?: ""
 
+    // Estado para guardar y actualizar la información de la orden activa
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
 
+    // Trae los datos actualizados de la orden desde Firebase cada vez que cambia el ID
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) { ordenActual = it }
@@ -214,6 +232,7 @@ fun MenuScreen() {
         Column(modifier = Modifier.fillMaxSize()) {
             HeaderBanner()
 
+            // Despliega la lista completa de platillos en un contenedor vertical optimizado
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = 16.dp)
@@ -223,6 +242,7 @@ fun MenuScreen() {
                 }
             }
 
+            // Si hay una orden activa, muestra la tarjeta de resumen en la parte inferior
             ordenActual?.let { orden ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),

@@ -41,7 +41,8 @@ import mx.edu.itson.pompompurincafe.ui.theme.*
 import java.util.Locale
 
 /**
- * Activity que maneja el pago de una orden por mesa completa.
+ * Pantalla que gestiona el proceso de cobro y cierre de una mesa completa.
+ * Calcula el desglose del consumo, permite añadir propina y registra el pago en el servidor.
  */
 class PagarOrdenMesa : ComponentActivity() {
 
@@ -60,7 +61,8 @@ class PagarOrdenMesa : ComponentActivity() {
 }
 
 /**
- * Composable principal para mostrar el flujo de pago de una mesa.
+ * Componente principal para el flujo de pago.
+ * Carga los datos guardados en Firebase y coordina el envío de los totales actualizados.
  */
 @Composable
 fun PagarOrdenMesaScreen() {
@@ -69,12 +71,14 @@ fun PagarOrdenMesaScreen() {
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
     val auth = Firebase.auth
 
+    // Estados para controlar los montos de la propina y el spinner de carga
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
     var montoPropina by remember { mutableDoubleStateOf(0.0) }
     var etiquetaPropina by remember { mutableStateOf("0%") }
     var showDialog by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
 
+    // Trae la información de la comanda desde la base de datos al abrir la pantalla
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) {
@@ -83,6 +87,7 @@ fun PagarOrdenMesaScreen() {
         }
     }
 
+    // Muestra la ventana emergente si el mesero elige ingresar una propina a mano
     if (showDialog) {
         CustomTipDialog(
             subtotal = ordenActual?.total ?: 0.0,
@@ -122,6 +127,7 @@ fun PagarOrdenMesaScreen() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Contenedor blanco que muestra la lista de productos y botones de propina
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -145,6 +151,7 @@ fun PagarOrdenMesaScreen() {
 
                 Spacer(modifier = Modifier.weight(1f))
 
+                // Muestra un círculo de carga mientras se procesan las peticiones en Firebase
                 if (isProcessing) {
                     CircularProgressIndicator(color = brown)
                 } else {
@@ -153,7 +160,8 @@ fun PagarOrdenMesaScreen() {
                             isProcessing = true
                             val subtotal = orden.subtotal
                             val totalFinal = subtotal + montoPropina
-                            
+
+                            // Crea el objeto con los datos finales de la transacción
                             val nuevoPago = Pago(
                                 ordenId = orden.id,
                                 monto = subtotal,
@@ -162,9 +170,9 @@ fun PagarOrdenMesaScreen() {
                                 mesero = auth.currentUser?.email ?: "Desconocido"
                             )
 
-                            // 1. Registrar el pago en su propio nodo
+                            // 1. Guarda el registro del dinero recibido en su colección correspondiente
                             FirebaseManager.registrarPago(nuevoPago, {
-                                // 2. Actualizar el estado de la orden
+                                // 2. Modifica el estado de la comanda actual marcándola como pagada
                                 val ordenPagada = orden.copy(
                                     pagada = true,
                                     propina = montoPropina,
@@ -173,6 +181,8 @@ fun PagarOrdenMesaScreen() {
                                 FirebaseManager.guardarOrden(ordenPagada, {
                                     isProcessing = false
                                     Toast.makeText(context, "Pago de mesa ${orden.mesa} registrado", Toast.LENGTH_SHORT).show()
+
+                                    // Limpia el historial de pantallas y regresa al panel principal de mesas
                                     val intent = Intent(context, MainActivity::class.java)
                                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                                     context.startActivity(intent)
@@ -200,6 +210,7 @@ fun PagarOrdenMesaScreen() {
 
                 Spacer(modifier = Modifier.height(32.dp))
             } ?: run {
+                // Pantalla de carga inicial si la base de datos tarda en responder
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = brown)
                 }
@@ -209,7 +220,8 @@ fun PagarOrdenMesaScreen() {
 }
 
 /**
- * Diálogo para ingresar una propina personalizada.
+ * Ventana de diálogo flotante para capturar montos de gratificación externa.
+ * Ofrece la modalidad de cálculo automático por porcentaje o un valor fijo en pesos.
  */
 @Composable
 fun CustomTipDialog(
@@ -225,6 +237,7 @@ fun CustomTipDialog(
         title = { Text("Propina Personalizada", color = brown, fontWeight = FontWeight.Bold) },
         text = {
             Column {
+                // Botones de selección para el tipo de cálculo
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(selected = isPercentage, onClick = { isPercentage = true }, colors = RadioButtonDefaults.colors(selectedColor = brown))
                     Text("Porcentual (%)", color = brown)
@@ -235,6 +248,7 @@ fun CustomTipDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Campo numérico que solo acepta dígitos y puntos decimales
                 OutlinedTextField(
                     value = value,
                     onValueChange = { if (it.all { char -> char.isDigit() || char == '.' }) value = it },
@@ -254,6 +268,7 @@ fun CustomTipDialog(
             Button(
                 onClick = {
                     val valDouble = value.toDoubleOrNull() ?: 0.0
+                    // Aplica la fórmula según la modalidad que seleccionó el usuario
                     val finalTip = if (isPercentage) subtotal * (valDouble / 100.0) else valDouble
                     val label = if (isPercentage) "${valDouble}%" else "$${valDouble}"
                     onConfirm(finalTip, label)
@@ -273,7 +288,8 @@ fun CustomTipDialog(
 }
 
 /**
- * Composable que muestra el resumen de pago con propina y total.
+ * Contenedor con la estructura interna del ticket o recibo de cobro.
+ * Despliega la lista en scroll de lo consumido y los botones rápidos de propina (0%, 5%, 10%).
  */
 @Composable
 fun ResumenPagoContenido(
@@ -296,6 +312,7 @@ fun ResumenPagoContenido(
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
+        // Lista que despliega el renglón con cantidad, nombre y subtotal de cada platillo
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(orden.productos) { item ->
                 Row(
@@ -315,6 +332,7 @@ fun ResumenPagoContenido(
 
         Text("Seleccionar Propina:", color = brown, fontWeight = FontWeight.Bold)
 
+        // Fila horizontal con los selectores de propina rápida
         Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             val opciones = listOf("0%", "5%", "10%", "Personalizado")
             opciones.forEach { txt ->
@@ -344,6 +362,7 @@ fun ResumenPagoContenido(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // Bloque final de sumas con el desglose del total definitivo
         Column(
             modifier = Modifier
                 .fillMaxWidth()

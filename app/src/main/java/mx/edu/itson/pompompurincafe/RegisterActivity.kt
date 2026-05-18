@@ -30,12 +30,17 @@ import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 
 /**
- * Activity para el registro de nuevos usuarios.
+ * Actividad encargada de dar de alta a nuevos usuarios en el sistema.
+ * Coordina la comunicación con Firebase Auth para el proceso de creación de credenciales.
  */
 class RegisterActivity : ComponentActivity() {
 
+    /** Instancia encargada de gestionar los servicios de autenticación y registros de Firebase. */
     private lateinit var auth: FirebaseAuth
 
+    /**
+     * Inicializa la pantalla de registro.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -45,6 +50,7 @@ class RegisterActivity : ComponentActivity() {
             PompompurinCafeTheme {
                 RegisterScreen(
                     onRegister = { email, password, onResult ->
+                        // Petición a Firebase para registrar un nuevo correo y contraseña.
                         auth.createUserWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 onResult(task.isSuccessful, task.exception?.message)
@@ -57,12 +63,14 @@ class RegisterActivity : ComponentActivity() {
 }
 
 /**
- * Composable que representa la pantalla de registro.
+ * Componente de interfaz de usuario que despliega el formulario de registro.
+ * Maneja los estados locales de los campos, los mensajes de error y las reglas de validación.
  */
 @Composable
 fun RegisterScreen(
     onRegister: (String, String, (Boolean, String?) -> Unit) -> Unit
 ) {
+    // Estados reactivos para capturar el texto ingresado y controlar el estado de carga.
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -79,6 +87,7 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Elementos gráficos de la cabecera e identidad de la marca.
             Image(
                 painter = painterResource(id = R.drawable.ordenes2_pompompurin),
                 contentDescription = "Logo Pompompurin",
@@ -98,6 +107,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Entrada para el correo electrónico del nuevo usuario.
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -116,6 +126,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Entrada de seguridad para asignar la contraseña de la cuenta.
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -135,6 +146,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Entrada de seguridad secundaria para validar la contraseña ingresada previamente.
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -154,11 +166,13 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Alternancia visual entre el indicador de progreso y el botón de acción principal.
             if (isLoading) {
                 CircularProgressIndicator(color = brown)
             } else {
                 Button(
                     onClick = {
+                        // Capa de validación local (campos llenos, coincidencia y longitud de caracteres).
                         if (email.isNotEmpty() && password.isNotEmpty() && confirmPassword.isNotEmpty()) {
                             if (password == confirmPassword) {
                                 if (password.length >= 6) {
@@ -167,6 +181,7 @@ fun RegisterScreen(
                                         isLoading = false
                                         if (success) {
                                             Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                                            // Cierra la pantalla actual y regresa al flujo previo (Login).
                                             (context as? ComponentActivity)?.finish()
                                         } else {
                                             Toast.makeText(
@@ -204,6 +219,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Opción interactiva para cancelar el registro y retornar al inicio de sesión.
             TextButton(onClick = { (context as? ComponentActivity)?.finish() }) {
                 Text(
                     text = "¿Ya tienes cuenta? Inicia sesión",

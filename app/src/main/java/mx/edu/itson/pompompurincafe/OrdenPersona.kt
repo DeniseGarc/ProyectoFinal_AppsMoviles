@@ -40,7 +40,8 @@ import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 
 /**
- * Activity que maneja la vista de orden por persona.
+ * Actividad que gestiona las comandas divididas de forma individual por persona.
+ * Permite registrar comensales por su nombre, asociarles platillos y revisar el estado de sus consumos.
  */
 class OrdenPersona : ComponentActivity() {
 
@@ -59,7 +60,8 @@ class OrdenPersona : ComponentActivity() {
 }
 
 /**
- * Composable que representa un platillo dentro de una orden individual.
+ * Tarjeta que representa un platillo dentro de la cuenta de un cliente específico.
+ * Cambia visualmente de color si el producto ya fue liquidado y bloquea sus controles de edición.
  */
 @Composable
 fun OrdenPersonaListaPlatillos(
@@ -80,6 +82,7 @@ fun OrdenPersonaListaPlatillos(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Oculta las flechas de cantidad si el platillo ya está pagado
                     if (!item.pagado) {
                         Icon(
                             imageVector = Icons.Default.ArrowDropUp,
@@ -118,6 +121,7 @@ fun OrdenPersonaListaPlatillos(
                             color = if (item.pagado) Color(0xFF2E7D32) else brown,
                             modifier = Modifier.width(180.dp)
                         )
+                        // Muestra una marca de confirmación si el platillo ya se cobró
                         if (item.pagado) {
                             Icon(
                                 Icons.Default.CheckCircle,
@@ -132,6 +136,7 @@ fun OrdenPersonaListaPlatillos(
                     }
                 }
             }
+            // Oculta el botón de borrar si el producto ya fue liquidado
             if (!item.pagado) {
                 Icon(
                     imageVector = Icons.Default.Delete,
@@ -145,7 +150,8 @@ fun OrdenPersonaListaPlatillos(
 }
 
 /**
- * Composable que muestra el encabezado de cada persona en la orden.
+ * Encabezado secundario que identifica a cada cliente dentro de la comanda.
+ * Muestra su número asignado, su nombre y un botón para abrir el menú y agregarle más productos.
  */
 @Composable
 fun PersonaHeader(numero: Int, nombre: String, ordenId: String, tipoOrden: String) {
@@ -168,6 +174,7 @@ fun PersonaHeader(numero: Int, nombre: String, ordenId: String, tipoOrden: Strin
 
         Spacer(modifier = Modifier.width(8.dp))
 
+        // Botón para ir al menú cargando específicamente el nombre de este cliente
         Box(
             modifier = Modifier
                 .size(32.dp)
@@ -187,18 +194,23 @@ fun PersonaHeader(numero: Int, nombre: String, ordenId: String, tipoOrden: Strin
 }
 
 /**
- * Composable principal para mostrar la orden dividida por personas.
+ * Componente principal que estructura la vista de las órdenes divididas.
+ * Maneja el formulario para ingresar nuevos clientes y agrupa los productos consumidos por cada persona.
  */
 @Composable
 fun ResumenOrdenPersonaScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Recupera las variables de control enviadas desde la pantalla anterior
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
     val tipoOrden = activity?.intent?.getStringExtra("tipoOrden") ?: "PERSONA"
 
+    // Variables de estado para el campo de texto y para la información remota de la mesa
     var nombreCliente by remember { mutableStateOf("") }
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
 
+    // Conexión inicial para obtener los datos de la orden desde Firebase
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) { ordenActual = it }
@@ -214,6 +226,7 @@ fun ResumenOrdenPersonaScreen() {
             ordenActual?.let { orden ->
                 InfoMesa(orden)
 
+                // Tarjeta contenedora con el campo de texto para registrar un cliente
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(10.dp),
                     colors = CardDefaults.cardColors(containerColor = brown),
@@ -227,6 +240,7 @@ fun ResumenOrdenPersonaScreen() {
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Input personalizado de una sola línea para escribir el nombre
                             BasicTextField(
                                 value = nombreCliente,
                                 onValueChange = { nombreCliente = it },
@@ -244,6 +258,7 @@ fun ResumenOrdenPersonaScreen() {
 
                             Spacer(modifier = Modifier.width(12.dp))
 
+                            // Botón para validar el nombre e ir directo a seleccionarle comida al menú
                             Box(
                                 modifier = Modifier
                                     .size(35.dp)
@@ -251,6 +266,7 @@ fun ResumenOrdenPersonaScreen() {
                                     .clickable {
                                         val nombreTrim = nombreCliente.trim()
                                         if (nombreTrim.isNotEmpty()) {
+                                            // Verifica que no se dupliquen clientes con el mismo nombre en la mesa
                                             val existe = ordenActual?.productos?.any {
                                                 it.cliente.equals(nombreTrim, ignoreCase = true)
                                             } ?: false
@@ -277,13 +293,16 @@ fun ResumenOrdenPersonaScreen() {
                     }
                 }
 
+                // Agrupa todos los platillos guardados usando el nombre del cliente como clave
                 val productosPorCliente = orden.productos.groupBy { it.cliente }
 
+                // Renderiza las secciones dinámicamente divididas por cada cliente
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     productosPorCliente.forEach { (cliente, items) ->
+                        // Crea el separador visual o título con los datos del comensal
                         item {
                             PersonaHeader(
                                 numero = productosPorCliente.keys.indexOf(cliente) + 1,
@@ -293,16 +312,19 @@ fun ResumenOrdenPersonaScreen() {
                             )
                         }
 
+                        // Lista detallada de los platillos que pertenecen a este cliente
                         items(items) { itemOrden ->
                             OrdenPersonaListaPlatillos(
                                 item = itemOrden,
                                 onUpdateQuantity = { nuevaCantidad ->
+                                    // Modifica la cantidad del platillo seleccionado y la guarda en Firebase
                                     val nuevaLista = orden.productos.map {
                                         if (it == itemOrden) it.copy(cantidad = nuevaCantidad) else it
                                     }.toMutableList()
                                     FirebaseManager.guardarOrden(orden.copy(productos = nuevaLista), {}, {})
                                 },
                                 onRemove = {
+                                    // Borra definitivamente el platillo seleccionado de la cuenta del comensal
                                     val nuevaLista = orden.productos.toMutableList()
                                     nuevaLista.remove(itemOrden)
                                     FirebaseManager.guardarOrden(orden.copy(productos = nuevaLista), {}, {})
@@ -314,6 +336,7 @@ fun ResumenOrdenPersonaScreen() {
             }
         }
 
+        // Botón inferior para finalizar la edición completa de la mesa y mandar a cocina
         Button(
             onClick = {
                 context.startActivity(Intent(context, MainActivity::class.java))

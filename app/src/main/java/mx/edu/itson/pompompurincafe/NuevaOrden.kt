@@ -35,7 +35,8 @@ import mx.edu.itson.pompompurincafe.model.Orden
 import mx.edu.itson.pompompurincafe.ui.theme.*
 
 /**
- * Activity para crear una nueva orden.
+ * Actividad encargada de registrar una nueva comanda en la cafetería.
+ * Permite al mesero elegir el número de mesa y especificar la modalidad de cobro de la cuenta.
  */
 class NuevaOrden : ComponentActivity() {
 
@@ -54,20 +55,25 @@ class NuevaOrden : ComponentActivity() {
 }
 
 /**
- * Composable principal para la creación de una orden.
+ * Componente principal que estructura la pantalla de creación de órdenes.
+ * Carga el fondo general de la aplicación y conecta los elementos visuales con la base de datos.
  */
 @Composable
 fun NuevaOrdenScreen() {
+
+    // Estados locales para rastrear la mesa seleccionada y la opción de cuenta elegida
     var tipoSeleccionado by remember { mutableIntStateOf(0) }
     var mesaSeleccionada by remember { mutableIntStateOf(0) }
     var ordenesActivas by remember { mutableStateOf<List<Orden>>(emptyList()) }
 
+    // Trae las órdenes vigentes desde Firebase para saber qué mesas están ocupadas actualmente
     LaunchedEffect(Unit) {
         FirebaseManager.suscribirseAOrdenes { ordenes ->
             ordenesActivas = ordenes.filter { !it.pagada }
         }
     }
 
+    // Filtra las mesas con cuentas abiertas para deshabilitar su selección
     val mesasOcupadas = ordenesActivas.map { it.mesa }.toSet()
 
     Box(
@@ -86,6 +92,7 @@ fun NuevaOrdenScreen() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Formulario principal con la cuadrícula de mesas y botones de tipo de orden
             NuevaOrdenCard(
                 seleccionado = tipoSeleccionado,
                 onSeleccionCambiada = { tipoSeleccionado = it },
@@ -96,6 +103,7 @@ fun NuevaOrdenScreen() {
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Botón de confirmación para guardar el registro final en Firebase
             BotonNuevaOrden(
                 tipo = tipoSeleccionado,
                 mesa = mesaSeleccionada,
@@ -110,7 +118,8 @@ fun NuevaOrdenScreen() {
 }
 
 /**
- * Composable que muestra la tarjeta de selección de mesa y tipo de orden.
+ * Contenedor visual que incluye los controles de selección de la comanda.
+ * Muestra las mesas en formato de cuadrícula interactiva y las opciones de tipo de cuenta.
  */
 @Composable
 fun NuevaOrdenCard(
@@ -142,6 +151,7 @@ fun NuevaOrdenCard(
                 fontWeight = FontWeight.SemiBold
             )
 
+            // Cuadrícula que distribuye las 15 mesas del establecimiento
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier.height(200.dp),
@@ -152,6 +162,7 @@ fun NuevaOrdenCard(
                     val estaOcupada = mesasOcupadas.contains(numero)
                     val esEstaSeleccionada = mesaSeleccionada == numero
 
+                    // Asigna el color del botón según la disponibilidad y el clic del usuario
                     Box(
                         modifier = Modifier
                             .aspectRatio(1f)
@@ -182,6 +193,7 @@ fun NuevaOrdenCard(
                 fontWeight = FontWeight.SemiBold
             )
 
+            // Selector horizontal para definir si la cuenta es general o dividida
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -189,6 +201,7 @@ fun NuevaOrdenCard(
                     .clip(RoundedCornerShape(12.dp))
                     .background(white)
             ) {
+                // Opción para cobrar todos los productos juntos
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -203,6 +216,7 @@ fun NuevaOrdenCard(
                     )
                 }
 
+                // Opción para separar el consumo individualmente
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -222,7 +236,8 @@ fun NuevaOrdenCard(
 }
 
 /**
- * Composable que maneja la creación de una nueva orden.
+ * Botón que procesa la creación de la comanda.
+ * Valida los datos requeridos, extrae el mesero autenticado y crea el documento en Firebase.
  */
 @Composable
 fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
@@ -231,19 +246,23 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
 
     Button(
         onClick = {
+            // Verifica que se haya elegido una mesa antes de continuar
             if (mesa != 0) {
                 if (mesasOcupadas.contains(mesa)) {
                     Toast.makeText(context, "La mesa $mesa ya no está disponible", Toast.LENGTH_SHORT).show()
                 } else {
+                    // Mapea la selección interna con las etiquetas de la base de datos
                     val etiqueta = if (tipo == 0) "mesa" else "individual"
                     val usuarioActual = auth.currentUser?.email ?: "Desconocido"
-                    
+
+                    // Crea el modelo con la información básica inicial
                     val nuevaOrden = Orden(
                         mesa = mesa,
                         tipoCuenta = etiqueta,
                         mesero = usuarioActual
                     )
 
+                    // Guarda la orden en la base de datos y redirige al flujo que corresponda
                     FirebaseManager.guardarOrden(
                         nuevaOrden,
                         onSuccess = {
@@ -278,7 +297,7 @@ fun BotonNuevaOrden(tipo: Int, mesa: Int, mesasOcupadas: Set<Int>) {
 }
 
 /**
- * Composable que muestra la imagen inferior decorativa.
+ * Componente decorativo que ubica la ilustración de la marca en la base de la pantalla.
  */
 @Composable
 fun FooterPompompurin() {

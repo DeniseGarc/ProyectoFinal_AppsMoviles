@@ -11,6 +11,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * Configuración del esquema de colores para el modo oscuro de la aplicación.
+ */
 private val DarkColorScheme = darkColorScheme(
     background = lightyellow,
     primary = yellow,
@@ -18,6 +21,9 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = white
 )
 
+/**
+ * Configuración del esquema de colores para el modo claro de la aplicación.
+ */
 private val LightColorScheme = lightColorScheme(
     background = lightyellow,
     primary = yellow,
@@ -35,6 +41,10 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+/**
+ * Función principal del tema que aplica el estilo visual de Pompompurin Café.
+ * Se encarga de gestionar la paleta de colores y la tipografía global de la interfaz.
+ */
 @Composable
 fun PompompurinCafeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -42,6 +52,7 @@ fun PompompurinCafeTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    /** Determina el esquema de colores a utilizar según la versión de Android y la preferencia del sistema. */
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -52,6 +63,7 @@ fun PompompurinCafeTheme(
         else -> LightColorScheme
     }
 
+    /** Inyecta los colores seleccionados y la tipografía base en el contenedor de MaterialTheme. */
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,

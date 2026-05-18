@@ -33,10 +33,12 @@ import mx.edu.itson.pompompurincafe.ui.theme.white
 import mx.edu.itson.pompompurincafe.ui.theme.yellow
 
 /**
- * Activity principal de inicio de sesión.
+ * Actividad encargada de gestionar el flujo de autenticación de usuarios.
+ * Inicializa los servicios de Firebase Auth y renderiza la interfaz gráfica de inicio de sesión.
  */
 class LoginActivity : ComponentActivity() {
 
+    // Instancia encargada del manejo de sesiones y autenticación con Firebase. */
     private lateinit var auth: FirebaseAuth
 
     /**
@@ -51,6 +53,7 @@ class LoginActivity : ComponentActivity() {
             PompompurinCafeTheme {
                 LoginScreen(
                     onLogin = { email, password, onResult ->
+                        // Petición asíncrona a Firebase Auth para verificar el usuario.
                         auth.signInWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 onResult(task.isSuccessful, task.exception?.message)
@@ -63,13 +66,16 @@ class LoginActivity : ComponentActivity() {
 }
 
 /**
- * Composable que representa la pantalla de login.
+ * Componente de interfaz de usuario para el formulario de acceso.
+ * Administra el estado de los campos de texto, las alertas visuales y la redirección de pantallas.
  */
 @Composable
 fun LoginScreen(
     onLogin: (String, String, (Boolean, String?) -> Unit) -> Unit
 ) {
     val context = LocalContext.current
+
+    // Estados para almacenar y validar las entradas de la interfaz.
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -84,6 +90,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Elementos gráficos de la cabecera e identidad de la marca.
             Image(
                 painter = painterResource(id = R.drawable.ordenes2_pompompurin),
                 contentDescription = "Logo Pompompurin",
@@ -112,6 +119,7 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Campo de captura para el identificador de usuario (correo).
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -130,6 +138,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Campo de captura cifrado para la credencial de seguridad (contraseña).
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -149,16 +158,19 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Control de flujo visual para alternar entre el indicador de carga y el botón de acción.
             if (isLoading) {
                 CircularProgressIndicator(color = brown)
             } else {
                 Button(
                     onClick = {
+                        // Validación local de campos obligatorios previo al envío de datos.
                         if (email.isNotEmpty() && password.isNotEmpty()) {
                             isLoading = true
                             onLogin(email, password) { success, errorMsg ->
                                 isLoading = false
                                 if (success) {
+                                    // Finaliza la actividad actual y navega al menú principal si el Login es exitoso.
                                     val intent = Intent(context, MainActivity::class.java)
                                     context.startActivity(intent)
                                     (context as? ComponentActivity)?.finish()
@@ -192,6 +204,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Enlace interactivo para redirigir al flujo de registro de nuevos usuarios.
             Text(
                 text = "¿No tienes una cuenta? Regístrate aquí",
                 color = brown,

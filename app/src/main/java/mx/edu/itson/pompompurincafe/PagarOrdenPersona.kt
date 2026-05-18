@@ -43,11 +43,14 @@ import mx.edu.itson.pompompurincafe.ui.theme.*
 import java.util.Locale
 
 /**
- * Activity encargada de mostrar la pantalla para pagar una orden por persona.
+ * Actividad encargada de gestionar el cobro individual de una mesa con cuentas divididas.
+ * Muestra el listado de los comensales registrados, permite seleccionar a uno para ver su desglose,
+ * añadirle propina de manera independiente y efectuar el pago parcial.
  */
 class PagarOrdenPersona : ComponentActivity() {
+
     /**
-     * Inicializa la actividad y carga el contenido Compose.
+     * Inicializa la pantalla de pago de la mesa por persona.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +64,8 @@ class PagarOrdenPersona : ComponentActivity() {
 }
 
 /**
- * Composable principal que maneja toda la lógica y UI para el pago por comensal.
+ * Componente principal que coordina el flujo de cobro por comensal.
+ * Alterna dinámicamente entre la lista de personas de la mesa y la tarjeta de desglose de cuenta de cada una.
  */
 @Composable
 fun PagarOrdenPersonaScreen() {
@@ -70,6 +74,7 @@ fun PagarOrdenPersonaScreen() {
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
     val auth = Firebase.auth
 
+    // Variables de estado para rastrear al comensal seleccionado y los montos calculados
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
     var comensalSeleccionado by remember { mutableStateOf<Comensal?>(null) }
     var montoPropina by remember { mutableDoubleStateOf(0.0) }
@@ -77,6 +82,7 @@ fun PagarOrdenPersonaScreen() {
     var showDialog by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
 
+    // Descarga la información vigente de la comanda desde Firebase al abrir la interfaz
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) {
@@ -85,6 +91,7 @@ fun PagarOrdenPersonaScreen() {
         }
     }
 
+    // Despliega la ventana emergente si se oprime la opción de propina personalizada
     if (showDialog) {
         CustomTipDialog(
             subtotal = comensalSeleccionado?.subtotal ?: ordenActual?.total ?: 0.0,
@@ -126,6 +133,7 @@ fun PagarOrdenPersonaScreen() {
 
                 val comensales = orden.comensales ?: emptyList()
 
+                // Escenario A: No se ha seleccionado ninguna persona (Muestra el listado de comensales)
                 if (comensalSeleccionado == null) {
                     Text(
                         text = "Selecciona quién va a pagar:",
@@ -135,6 +143,7 @@ fun PagarOrdenPersonaScreen() {
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
 
+                    // Lista en scroll que dibuja las tarjetas de cada cliente en la mesa
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
@@ -147,6 +156,7 @@ fun PagarOrdenPersonaScreen() {
                                     .fillMaxWidth()
                                     .padding(vertical = 6.dp)
                                     .clickable(enabled = !comensal.pagado) {
+                                        // Abre el detalle de cobro de este cliente y resetea las propinas
                                         comensalSeleccionado = comensal
                                         montoPropina = 0.0
                                         etiquetaPropina = "0%"
@@ -177,6 +187,7 @@ fun PagarOrdenPersonaScreen() {
                                             fontSize = 14.sp
                                         )
                                     }
+                                    // Muestra indicador verde si ya pagó, o un botón interactivo si falta cobrarle
                                     if (comensal.pagado) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
@@ -205,11 +216,13 @@ fun PagarOrdenPersonaScreen() {
                         }
                     }
 
+                    // Botón final que aparece únicamente cuando todas las personas de la mesa liquidaron su subcuenta
                     val todosListos = comensales.all { it.pagado }
                     if (todosListos) {
                         Button(
                             onClick = {
                                 val ordenPagada = orden.copy(pagada = true)
+                                // Cambia el estado de la mesa completa a pagada y regresa al menú de mesas
                                 FirebaseManager.guardarOrden(ordenPagada, {
                                     Toast.makeText(context, "Mesa ${orden.mesa} liquidada", Toast.LENGTH_SHORT).show()
                                     val intent = Intent(context, MainActivity::class.java)
@@ -231,6 +244,7 @@ fun PagarOrdenPersonaScreen() {
                     }
 
                 } else {
+                    // Escenario B: Un comensal específico fue seleccionado (Muestra su desglose de cuenta)
                     val comensal = comensalSeleccionado!!
                     val productosComensal = orden.productos.filter { it.cliente == comensal.nombre }
 
@@ -252,6 +266,7 @@ fun PagarOrdenPersonaScreen() {
                                 modifier = Modifier.padding(bottom = 12.dp)
                             )
 
+                            // Muestra exclusivamente los productos asignados a este cliente
                             LazyColumn(modifier = Modifier.weight(1f)) {
                                 items(productosComensal) { item ->
                                     Row(
@@ -291,6 +306,8 @@ fun PagarOrdenPersonaScreen() {
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
+
+                            // Botones horizontales de propina rápida para la subcuenta individual
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -336,6 +353,7 @@ fun PagarOrdenPersonaScreen() {
                             val subtotal = comensal.subtotal
                             val totalConPropina = subtotal + montoPropina
 
+                            // Resumen de totales con desglose numérico individual
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -376,6 +394,7 @@ fun PagarOrdenPersonaScreen() {
 
                     Spacer(modifier = Modifier.weight(1f))
 
+                    // Renders del indicador de carga o del botón final de cobro de subcuenta
                     if (isProcessing) {
                         CircularProgressIndicator(color = brown)
                     } else {
@@ -385,6 +404,7 @@ fun PagarOrdenPersonaScreen() {
                                 val subtotalPago = comensal.subtotal
                                 val totalFinalPago = subtotalPago + montoPropina
 
+                                // Construye la transacción ligada a esta subcuenta específica
                                 val nuevoPago = Pago(
                                     ordenId = orden.id,
                                     comensalId = comensal.id,
@@ -403,6 +423,7 @@ fun PagarOrdenPersonaScreen() {
                                         } else it
                                     }?.toMutableList()
 
+                                    // Marca individuales como pagados en los platillos de la orden general
                                     val productosActualizados = orden.productos.map {
                                         if (it.cliente == comensal.nombre) it.copy(pagado = true) else it
                                     }.toMutableList()
@@ -412,9 +433,12 @@ fun PagarOrdenPersonaScreen() {
                                         productos = productosActualizados
                                     )
 
+                                    // 3. Envía la actualización de la comanda completa a Firebase
                                     FirebaseManager.guardarOrden(ordenActualizada, {
                                         isProcessing = false
                                         Toast.makeText(context, "Pago de ${comensal.nombre} registrado", Toast.LENGTH_SHORT).show()
+
+                                        // Limpia la selección y regresa al listado de personas pendientes
                                         comensalSeleccionado = null
                                         montoPropina = 0.0
                                         etiquetaPropina = "0%"
@@ -442,6 +466,7 @@ fun PagarOrdenPersonaScreen() {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Enlace secundario para cerrar el detalle de esta persona y volver a la lista anterior
                     TextButton(onClick = { if (!isProcessing) comensalSeleccionado = null }) {
                         Text("← Volver a la lista", color = brown, fontWeight = FontWeight.SemiBold)
                     }
@@ -449,6 +474,7 @@ fun PagarOrdenPersonaScreen() {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
             } ?: run {
+                // Indicador de carga si la lectura de la orden en el servidor demora
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = brown)
                 }
@@ -458,7 +484,7 @@ fun PagarOrdenPersonaScreen() {
 }
 
 /**
- * Preview del composable principal para diseño en Android Studio.
+ * Vista previa de la pantalla de pago por persona.
  */
 @Preview(showBackground = true)
 @Composable

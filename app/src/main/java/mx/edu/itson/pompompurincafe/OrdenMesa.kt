@@ -38,7 +38,8 @@ import mx.edu.itson.pompompurincafe.ui.theme.yellow
 import java.util.Locale
 
 /**
- * Activity que muestra el resumen de una orden por mesa.
+ * Actividad que muestra el desglose y resumen de los platillos agregados a una mesa entera.
+ * Permite ajustar cantidades, borrar elementos y confirmar el envío del pedido.
  */
 class OrdenMesa : ComponentActivity() {
 
@@ -57,7 +58,8 @@ class OrdenMesa : ComponentActivity() {
 }
 
 /**
- * Composable que representa un item dentro de la lista de platillos de la orden.
+ * Renglón individual para cada platillo dentro de la lista de revisión.
+ * Incluye flechas para modificar la cantidad directamente o un botón para eliminarlo.
  */
 @Composable
 fun OrdenListaPlatillos(
@@ -81,6 +83,7 @@ fun OrdenListaPlatillos(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Panel de control numérico para subir, bajar o remover el producto
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropUp,
@@ -132,7 +135,7 @@ fun OrdenListaPlatillos(
 }
 
 /**
- * Composable que muestra la información general de la mesa.
+ * Encabezado de información que muestra de forma destacada el número de mesa y el costo total.
  */
 @Composable
 fun InfoMesa(orden: Orden) {
@@ -164,17 +167,22 @@ fun InfoMesa(orden: Orden) {
 }
 
 /**
- * Composable principal que muestra el resumen de la orden.
+ * Componente que estructura la lista de platillos ordenados y las opciones de edición.
+ * Muestra el estado de la comanda en tiempo real y gestiona las actualizaciones en Firebase.
  */
 @Composable
 fun ResumenOrdenScreen() {
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Obtiene los datos clave pasados por el Intent desde la pantalla previa
     val ordenId = activity?.intent?.getStringExtra("ordenId") ?: ""
     val tipoOrden = activity?.intent?.getStringExtra("tipoOrden") ?: "MESA"
 
+    // Estado local para almacenar la información de la orden activa
     var ordenActual by remember { mutableStateOf<Orden?>(null) }
 
+    // Escucha y actualiza los datos de la orden en tiempo real desde Firebase
     LaunchedEffect(ordenId) {
         if (ordenId.isNotEmpty()) {
             FirebaseManager.obtenerOrden(ordenId) { ordenActual = it }
@@ -219,6 +227,7 @@ fun ResumenOrdenScreen() {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
+                    // Botón para regresar al menú y seguir agregando más cosas
                     Box(
                         modifier = Modifier
                             .size(32.dp)
@@ -235,6 +244,7 @@ fun ResumenOrdenScreen() {
                     }
                 }
 
+                // Listado en columna que renderiza todos los productos agregados
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 100.dp)
@@ -243,6 +253,7 @@ fun ResumenOrdenScreen() {
                         OrdenListaPlatillos(
                             item = item,
                             onUpdateQuantity = { nuevaCantidad ->
+                                // Busca el producto seleccionado y actualiza su cantidad en Firebase
                                 val nuevaLista = orden.productos.map {
                                     if (it == item) it.copy(cantidad = nuevaCantidad) else it
                                 }.toMutableList()
@@ -250,6 +261,7 @@ fun ResumenOrdenScreen() {
                                 FirebaseManager.guardarOrden(ordenActualizada, {}, {})
                             },
                             onRemove = {
+                                // Elimina por completo el producto seleccionado de la lista
                                 val nuevaLista = orden.productos.toMutableList()
                                 nuevaLista.remove(item)
                                 val ordenActualizada = orden.copy(productos = nuevaLista)
@@ -261,6 +273,7 @@ fun ResumenOrdenScreen() {
             }
         }
 
+        // Botón principal inferior para concluir el pedido y regresar a la pantalla de mesas
         Button(
             onClick = {
                 context.startActivity(Intent(context, MainActivity::class.java))

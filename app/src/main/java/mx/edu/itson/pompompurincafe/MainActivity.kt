@@ -40,7 +40,8 @@ import mx.edu.itson.pompompurincafe.ui.theme.yellow
 import java.util.Locale
 
 /**
- * Activity principal que muestra las órdenes activas.
+ * Actividad principal de la aplicación que actúa como el panel de control de mesas.
+ * Coordina el ciclo de vida de la pantalla principal y renderiza el listado de comandos activos.
  */
 class MainActivity : ComponentActivity() {
 
@@ -60,7 +61,8 @@ class MainActivity : ComponentActivity() {
 }
 
 /**
- * Composable que muestra el banner superior.
+ * Componente que muestra el banner con el logotipo en la parte superior.
+ * Ayuda a mantener la identidad visual del café dentro de la pantalla.
  */
 @Composable
 fun HeaderBanner() {
@@ -94,12 +96,14 @@ fun HeaderBanner() {
 }
 
 /**
- * Composable que representa una tarjeta de orden.
+ * Componente visual que representa una tarjeta de orden individual dentro de la cuadrícula.
+ * Despliega información del estado de la mesa, mesero asignado, desglose de costos y controles de acción.
  */
 @Composable
 fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
     val context = LocalContext.current
 
+    // Define el texto según si el pago es por persona o de toda la mesa
     val personasTexto = if (orden.tipoCuenta == "individual") {
         if (orden.numPersonas == 1) "1 persona" else "${orden.numPersonas ?: 0} personas"
     } else {
@@ -129,6 +133,7 @@ fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
                 )
 
                 Row {
+                    // Control interactivo para redirigir a la pantalla de pago
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -147,6 +152,7 @@ fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
 
                     Spacer(modifier = Modifier.width(4.dp))
 
+                    // Control interactivo para la modificación o edición de los productos de la comanda
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -170,6 +176,7 @@ fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
 
                     Spacer(modifier = Modifier.width(4.dp))
 
+                    // Lanzador del callback destinado a remover o dar de baja el registro de la comanda
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -194,6 +201,7 @@ fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Bloque de desglose financiero de la orden utilizando formato numérico estándar
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
                 Column {
                     Text(text = "Subtotal", color = white, fontSize = 12.sp)
@@ -219,7 +227,7 @@ fun OrdenCard(orden: Orden, onDelete: () -> Unit) {
 }
 
 /**
- * Composable que dibuja el fondo de la aplicación.
+ * Componente gráfico utilitario destinado a pintar la imagen de fondo de manera persistente.
  */
 @Composable
 fun Fondo() {
@@ -232,20 +240,26 @@ fun Fondo() {
 }
 
 /**
- * Composable principal que muestra la lista de órdenes.
+ * Componente de pantalla principal que coordina el flujo de visualización de las comandas.
+ * Consume datos reactivos desde Firebase Firestore y gestiona el modal de confirmación de borrado.
  */
 @Composable
 fun OrdenesScreen() {
     val context = LocalContext.current
+
+    // Variables de estado para actualizar la lista de órdenes automáticamente
     var listaOrdenes by remember { mutableStateOf<List<Orden>>(emptyList()) }
     var ordenAEliminar by remember { mutableStateOf<Orden?>(null) }
 
+    // Conexión con Firebase para traer la lista de órdenes actualizada
     LaunchedEffect(Unit) {
         FirebaseManager.suscribirseAOrdenes { ordenes ->
+            // Filtra y despliega únicamente los documentos cuyo estado de pago no se ha completado
             listaOrdenes = ordenes.filter { !it.pagada }
         }
     }
 
+    // Modal de diálogo que interrumpe la interfaz para validar la eliminación del registro
     if (ordenAEliminar != null) {
         AlertDialog(
             onDismissRequest = { ordenAEliminar = null },
@@ -255,6 +269,7 @@ fun OrdenesScreen() {
                 TextButton(
                     onClick = {
                         ordenAEliminar?.let { orden ->
+                            // Petición de eliminación física del documento en Firebase
                             FirebaseManager.eliminarOrden(
                                 orden.id,
                                 onSuccess = {
@@ -301,6 +316,7 @@ fun OrdenesScreen() {
                 modifier = Modifier.padding(16.dp)
             )
 
+            // Despliegue optimizado en formato de rejilla con distribución de dos columnas
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -314,6 +330,7 @@ fun OrdenesScreen() {
             Spacer(modifier = Modifier.height(100.dp))
         }
 
+        // Botón flotante inferior asignado a iniciar la instanciación de una nueva comanda
         Button(
             onClick = {
                 val intent = Intent(context, NuevaOrden::class.java)
