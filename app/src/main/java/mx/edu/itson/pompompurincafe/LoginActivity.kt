@@ -92,10 +92,10 @@ fun LoginScreen(
         ) {
             // Elementos gráficos de la cabecera e identidad de la marca.
             Image(
-                painter = painterResource(id = R.drawable.ordenes2_pompompurin),
+                painter = painterResource(id = R.drawable.logo_cafe),
                 contentDescription = "Logo Pompompurin",
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(300.dp)
                     .padding(bottom = 16.dp)
             )
 

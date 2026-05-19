@@ -309,7 +309,7 @@ fun OrdenesScreen() {
             HeaderBanner()
 
             Text(
-                text = "Ordenes activas",
+                text = "Órdenes activas",
                 color = brown,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,

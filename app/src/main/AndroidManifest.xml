@@ -6,9 +6,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/ordenes2_pompompurin"
+        android:icon="@drawable/logo_cafe"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ordenes2_pompompurin"
+        android:roundIcon="@drawable/logo_cafe"
         android:supportsRtl="true"
         android:theme="@style/Theme.PompompurinCafe">
         <activity
